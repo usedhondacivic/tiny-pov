@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Tiny POV</title>
+    <script type="module" src="index.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="menu">
+        <h1>Tiny POV</h1>
+        <p>
+            Welcome to Tiny POV! I'm glad you're here.
+        </p>
+        <p>
+            To begin, please upload the image you wish to view on the
+            display.
+        </p>
+        <img id="snapshot" src="">
+        <label for="file_upload" id="file_upload_button">
+            <p>Choose Image</p>
+        </label>
+        <input id="file_upload" type="file" accept="image/jpeg, image/png, image/jpg">
+        <div id="post_upload">
+            <p>
+                Great choice! You should now see a preview of your image, just as it will appear on Tiny POV. <br>
+                When you're ready, click download to generate a file for the SD card.
+            </p>
+
+            <button id="download">Download</button>
+        </div>
+
+        <div id="post_download">
+            <p>
+
+            </p>
+        </div>
+
+        <p id="questions">Have any questions? Please <a href="https://github.com/usedhondacivic/tiny-pov">let me
+                know.</a></p>
+    </div>
+    <div id="preview">
+        <canvas></canvas>
+    </div>
+</body>
+
+</html>
