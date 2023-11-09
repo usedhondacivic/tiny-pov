@@ -4,9 +4,9 @@ PORT = /dev/ttyUSB0
 DEVICE = attiny1616
 PROGRAMMER = serialupdi
 
-OBJECTS = main.o protocol_drivers/uart/uart.o protocol_drivers/spi/spi.o
+OBJECTS = main.o protocol_drivers/uart/uart.o protocol_drivers/spi/spi.o protocol_drivers/sd/sd.o
 
-# Clock speed my be provided for delays to be timed properly 
+# Clock speed must be provided for delays to be timed properly 
 CLOCK = 20000000
 
 # Baud rate for programming
@@ -31,6 +31,9 @@ protocol_drivers/uart/%.o: %.cpp
 	$(COMPILE) -c $^ -o $@
 
 protocol_drivers/spi/%.o: %.cpp
+	$(COMPILE) -c $^ -o $@
+
+protocol_drivers/sd/%.o: %.cpp
 	$(COMPILE) -c $^ -o $@
 
 $(FILENAME).elf $(FILENAME).hex: $(OBJECTS)
