@@ -22,7 +22,7 @@ void USART0_init(void)
     PORTB.DIR &= ~PIN3_bm;
     PORTB.DIR |= PIN2_bm;
 
-    USART0.BAUD = (uint16_t)USART0_BAUD_RATE(9600);
+    USART0.BAUD = (uint16_t)USART0_BAUD_RATE(115200);
     USART0.CTRLB |= USART_TXEN_bm;
 
     stdout = &USART_stream;

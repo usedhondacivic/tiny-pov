@@ -4,7 +4,7 @@ PORT = /dev/ttyUSB0
 DEVICE = attiny1616
 PROGRAMMER = serialupdi
 
-OBJECTS = main.o uart.o
+OBJECTS = main.o protocol_drivers/uart/uart.o protocol_drivers/spi/spi.o
 
 # Clock speed my be provided for delays to be timed properly 
 CLOCK = 20000000
@@ -25,6 +25,12 @@ upload: $(FILENAME).elf $(FILENAME).hex
 	avrdude -v -p $(DEVICE) -c $(PROGRAMMER) -P $(PORT) -b $(BAUD) -U flash:w:$(FILENAME).hex:i
 
 %.o: %.cpp
+	$(COMPILE) -c $^ -o $@
+
+protocol_drivers/uart/%.o: %.cpp
+	$(COMPILE) -c $^ -o $@
+
+protocol_drivers/spi/%.o: %.cpp
 	$(COMPILE) -c $^ -o $@
 
 $(FILENAME).elf $(FILENAME).hex: $(OBJECTS)
