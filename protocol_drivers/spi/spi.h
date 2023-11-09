@@ -4,7 +4,7 @@
 
 typedef struct
 {
-    volatile PORT_t *port;
+    volatile uint8_t *port;
     uint8_t pin_mask;
 } pin_t;
 

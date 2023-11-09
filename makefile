@@ -39,7 +39,7 @@ $(FILENAME).elf $(FILENAME).hex: $(OBJECTS)
 	avr-size $(FILENAME).elf
 
 clean:
-	rm *.o *.hex *.elf
+	rm *.o *.hex *.elf protocol_drivers/spi/*.o protocol_drivers/uart/*.o
 
 # Fuses are non-volitile settings that can be set by avrdude and persist between resets
 # Setting fuse2 to 0x7e enables 20Mhz clock

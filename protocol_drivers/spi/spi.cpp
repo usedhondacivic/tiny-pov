@@ -1,3 +1,10 @@
+/**
+ * Author: Michael Crum
+ * Date: 11/8/2023
+ * SPI Driver for ATtiny1616 based on:
+ * https://ww1.microchip.com/downloads/en/Appnotes/TB3215-Getting-Started-with-SPI-90003215A.pdf
+ */
+
 #include <avr/io.h>
 #include <util/delay.h>
 #include <math.h>

@@ -1,4 +1,5 @@
 #include <avr/io.h>
+#include <avr/power.h>
 // F_CPU frequency is defined in the makefile
 #include <util/delay.h>
 
@@ -7,6 +8,7 @@
 
 int main(void)
 {
+    // Disable clock division
     CCP = CCP_IOREG_gc;
     CLKCTRL_MCLKCTRLB &= ~(1);
 
@@ -23,7 +25,7 @@ int main(void)
         0xFF};
     SPI0_init();
 
-    SPIDevice apa102Disp = SPIDevice((pin_t){.port = &PORTA, .pin_mask = PIN0_bm});
+    SPIDevice apa102Disp = SPIDevice((pin_t){.port = (volatile uint8_t *)(&PORTA), .pin_mask = PIN0_bm});
 
     unsigned int n = 0;
 
@@ -39,6 +41,7 @@ int main(void)
                 apa102Disp.write_byte(val);
             }
         }
+        apa102Disp.write_data(stop, 4);
         n += 5;
     }
 }
