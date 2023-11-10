@@ -8,8 +8,7 @@
 #define LED 0
 #define DELAY_MS 500
 
-int
-main(void)
+int main(void)
 {
 	// Disable clock prescaler
 	CCP = CCP_IOREG_gc;

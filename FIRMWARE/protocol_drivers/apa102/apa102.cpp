@@ -30,5 +30,5 @@ APA102::APA102(uint8_t num_leds,
 };
 
 void APA102::write_strip(uint8_t* buffer){
-
+	// test
 };

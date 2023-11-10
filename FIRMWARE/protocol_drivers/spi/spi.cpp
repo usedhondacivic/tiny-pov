@@ -11,8 +11,7 @@
 
 #include "spi.h"
 
-void
-SPI0_init(void)
+void SPI0_init(void)
 {
 	PORTA.DIR |= PIN1_bm;		  /* Set MOSI pin direction to output */
 	PORTA.DIR &= ~PIN2_bm;		  /* Set MISO pin direction to input */
@@ -32,8 +31,7 @@ SPIDevice::SPIDevice(pin_t cs)
 	*(cs.port + 0) |= cs.pin_mask; // pin DIR is offset 0
 }
 
-void
-SPIDevice::write_data(const uint8_t* data, uint8_t data_len)
+void SPIDevice::write_data(const uint8_t* data, uint8_t data_len)
 {
 	enable(cs);
 	for (uint8_t i = 0; i < data_len; i++) {
@@ -41,14 +39,12 @@ SPIDevice::write_data(const uint8_t* data, uint8_t data_len)
 	}
 }
 
-void
-SPIDevice::read_data(uint8_t* buffer, uint8_t data_len)
+void SPIDevice::read_data(uint8_t* buffer, uint8_t data_len)
 {
 	enable(cs);
 }
 
-void
-SPIDevice::enable(pin_t dev)
+void SPIDevice::enable(pin_t dev)
 {
 	// Disable current device (note cs is active low)
 	if (current_device.port != nullptr)
@@ -60,8 +56,7 @@ SPIDevice::enable(pin_t dev)
 	current_device = dev;
 }
 
-uint8_t
-SPIDevice::write_byte(uint8_t data)
+uint8_t SPIDevice::write_byte(uint8_t data)
 {
 	SPI0.DATA = data;
 	while (!(SPI0.INTFLAGS & SPI_IF_bm)) /* waits until data is exchanged*/
@@ -71,8 +66,7 @@ SPIDevice::write_byte(uint8_t data)
 	return SPI0.DATA;
 }
 
-uint8_t
-SPIDevice::read_byte(uint8_t data)
+uint8_t SPIDevice::read_byte(uint8_t data)
 {
 	return write_byte(0xFF);
 };

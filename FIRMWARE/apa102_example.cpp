@@ -5,8 +5,7 @@
 #include "protocol_drivers/spi/spi.h"
 #include "protocol_drivers/uart/uart.h"
 
-int
-main(void)
+int main(void)
 {
 	// Disable clock division
 	CCP = CCP_IOREG_gc;

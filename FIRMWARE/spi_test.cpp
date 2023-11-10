@@ -8,8 +8,7 @@ void SPI0_init(void);
 void slaveSelect(void);
 void slaveDeselect(void);
 uint8_t SPI0_exchangeData(uint8_t data);
-void
-SPI0_init(void)
+void SPI0_init(void)
 {
 	PORTA.DIR |= PIN1_bm;		  /* Set MOSI pin direction to output */
 	PORTA.DIR &= ~PIN2_bm;		  /* Set MISO pin direction to input */
@@ -19,8 +18,7 @@ SPI0_init(void)
 				 | SPI_ENABLE_bm  /* Enable module */
 				 | SPI_MASTER_bm; /* SPI module in Master mode */
 }
-uint8_t
-SPI0_exchangeData(uint8_t data)
+uint8_t SPI0_exchangeData(uint8_t data)
 {
 	SPI0.DATA = data;
 	while (!(SPI0.INTFLAGS & SPI_IF_bm)) /* waits until data is exchanged*/
@@ -29,18 +27,15 @@ SPI0_exchangeData(uint8_t data)
 	}
 	return SPI0.DATA;
 }
-void
-slaveSelect(void)
+void slaveSelect(void)
 {
 	PORTA.OUT &= ~PIN7_bm; // Set SS pin value to LOW
 }
-void
-slaveDeselect(void)
+void slaveDeselect(void)
 {
 	PORTA.OUT |= PIN7_bm; // Set SS pin value to HIGH
 }
-int
-main(void)
+int main(void)
 {
 	uint8_t num_leds = 64;
 	uint8_t start[] = { 0x00, 0x00, 0x00, 0x00 };
