@@ -15,7 +15,7 @@
 
 #include "uart.h"
 
-int USART0_printChar(char character, FILE* stream);
+int USART0_printChar(char character, FILE *stream);
 FILE USART_stream =
   FDEV_SETUP_STREAM(USART0_printChar, NULL, _FDEV_SETUP_WRITE);
 
@@ -30,7 +30,7 @@ void USART0_init(void)
 	stdout = &USART_stream;
 }
 
-int USART0_printChar(char character, FILE* stream)
+int USART0_printChar(char character, FILE *stream)
 {
 	while (!(USART0.STATUS & USART_DREIF_bm)) {
 		;

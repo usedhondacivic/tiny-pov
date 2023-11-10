@@ -35,4 +35,6 @@ download.addEventListener("click", function () {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+    var post_upload = document.getElementById('post_download');
+    post_upload.style.display = "block";
 });
