@@ -1,10 +1,10 @@
 # Define variable that may change between projects
-FILENAME = main
+FILENAME = apa102_example
 PORT = /dev/ttyUSB0
 DEVICE = attiny1616
 PROGRAMMER = serialupdi
 
-OBJECTS = main.o protocol_drivers/uart/uart.o protocol_drivers/spi/spi.o protocol_drivers/sd/sd.o
+OBJECTS = apa102_example.o protocol_drivers/uart/uart.o protocol_drivers/spi/spi.o protocol_drivers/sd/sd.o
 
 # Clock speed must be provided for delays to be timed properly 
 CLOCK = 20000000

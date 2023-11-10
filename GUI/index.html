@@ -8,42 +8,52 @@
 </head>
 
 <body>
-    <div id="menu">
-        <h1>Tiny POV</h1>
-        <p>
-            Welcome to Tiny POV! I'm glad you're here.
-        </p>
-        <p>
-            To begin, please upload the image you wish to view on the
-            display.
-        </p>
-        <img id="snapshot" src="">
-        <label for="file_upload" id="file_upload_button">
-            <p>Choose Image</p>
-        </label>
-        <input id="file_upload" type="file" accept="image/jpeg, image/png, image/jpg">
-        <div id="post_upload">
+    <div id="left_panel">
+        <div id="menu">
+            <h1>Tiny POV</h1>
             <p>
-                Great choice! You should now see a preview of your image just as it will appear on Tiny POV. <br>
-                When you're ready, click download to generate a file for the SD card.
+                Welcome to Tiny POV! I'm glad you're here.
             </p>
-
-            <button id="download">Download</button>
-        </div>
-
-        <div id="post_download">
             <p>
+                To begin, please upload the image you wish to view on the
+                display.
+            </p>
+            <img id="snapshot" src="">
+            <label for="file_upload" id="file_upload_button">
+                <p>Choose Image</p>
+            </label>
+            <input id="file_upload" type="file" accept="image/jpeg, image/png, image/jpg">
+            <div id="post_upload">
+                <p>
+                    Great choice! Heres a preview of the image as it will appear on Tiny POV. <br>
+                    When you're ready, click download to generate a file for the SD card.
+                </p>
 
+                <button id="download">Download</button>
+            </div>
+            <div id="post_download">
+                <p>
+                    Now you're ready to load your image onto TinyPOV.
+                </p>
+                <ul>
+                    <li>Insert the SD card</li>
+                    <li>Delete the existing .txt file</li>
+                    <li>Place the new .txt file onto the SD card</li>
+                </ul>
+                <p>
+                    And you're done!
+                </p>
+            </div>
+        </div>
+        <div id="questions">
+            <p>
+                Have any questions? Please <a href="https://github.com/usedhondacivic/tiny-pov">let me know.</a><br>
+                Want to see more projects? <a href="https://www.michael-crum.com">Checkout my website</a>
             </p>
         </div>
-
-        <p id="questions">
-            Have any questions? Please <a href="https://github.com/usedhondacivic/tiny-pov">let me know.</a><br>
-            Want to see more projects? <a href="https://www.michael-crum.com">Checkout my website</a>
-        </p>
     </div>
-    <div id="preview">
-        <canvas></canvas>
+    <div id="right_panel">
+        <svg id="preview_svg"></svg>
     </div>
 </body>
 

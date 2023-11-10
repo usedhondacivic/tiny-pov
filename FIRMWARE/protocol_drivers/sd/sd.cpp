@@ -6,7 +6,7 @@
  */
 
 #include <avr/io.h>
-#include <util/delay.h>
 #include <math.h>
+#include <util/delay.h>
 
 #include "../spi/spi.h"
