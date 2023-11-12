@@ -2,6 +2,8 @@
 
 Work in progress, check back soon for more.
 
+[Checkout the GUI](http://michael-crum.com/tiny-pov/) for a sneak peak.
+
 Tiny-pov is a low cost, high performance, persistence of vision display built with the ATtiny1616.
 This project is designed to explore cost effective and easily manufacturable electrical design.
 
