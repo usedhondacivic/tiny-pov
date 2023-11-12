@@ -1,6 +1,3 @@
-let file_contents = "";
-let image_name = "";
-
 /**
  * HELPERS
  */
@@ -126,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function(){
 })
 
 // DOM / UI MANIPULATION
-
 function render_image(url) {
     var post_upload = document.getElementById('post_upload');
     post_upload.style.display = "block";
@@ -165,6 +161,8 @@ function render_image(url) {
     }
 }
 
+let image_name = "";
+
 const input = document.querySelector("input");
 input.addEventListener("change", function () {
     if (this.files && this.files[0]) {
@@ -175,10 +173,15 @@ input.addEventListener("change", function () {
 
 const download = document.getElementById("download");
 download.addEventListener("click", function () {
+    let flat_image = graph.pixel_data.flatMap(d => [].slice.call(d.color)); // [].slice.call -> convert uint8 array to normal js array
+    let file_contents = "";
+    for(var i = 0; i < flat_image.length; i++){
+        file_contents += String.fromCharCode(flat_image[i]);
+    }
     var url = "data:text/plain;charset=utf-8," + encodeURIComponent(file_contents);
     var element = document.createElement('a');
     element.setAttribute("href", `${url}`);
-    element.setAttribute('download', `tiny_pov_${image_name}.txt`);
+    element.setAttribute('download', `tiny_pov_${image_name}.pov`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
