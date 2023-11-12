@@ -155,7 +155,9 @@ input[type="file"] {
     #right_panel {
         order: -1;
         min-height: 60vw;
+        max-height: 75vh;
         flex-shrink: 0;
+        min-width: 0px;
     }
 
     #questions {
