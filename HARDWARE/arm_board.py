@@ -1,3 +1,9 @@
+# Author: Michael Crum
+# Date: 11/14/23
+# Circuit description for Tiny POV's arm circuit board. This is the part that rotates.
+# Inductively powered from the board located in motor_board.py
+
+
 from skidl import *
 
 set_default_tool(KICAD7)
@@ -14,7 +20,14 @@ test_point_pair = Part(
     "tiny_pov_symbols",
     "TestPoint_2Pole",
     dest=TEMPLATE,
-    footprint="tiny_pov_footprints:TestPoint_2Point",
+    footprint="tiny_pov_footprints:PinHeader_1x02",
+)
+
+test_point = Part(
+    "tiny_pov_symbols",
+    "TestPoint",
+    dest=TEMPLATE,
+    footprint="tiny_pov_footprints:TestPoint_Pad",
 )
 
 R_0402 = Part(
@@ -26,9 +39,23 @@ R_0402 = Part(
 
 C_0402 = Part(
     "tiny_pov_symbols",
-    "C_Polarized",
+    "C",
     dest=TEMPLATE,
-    footprint="tiny_pov_footprints:C_polarized_TH",
+    footprint="tiny_pov_footprints:C_0603_hand_solder",
+)
+
+R_0603 = Part(
+    "tiny_pov_symbols",
+    "R",
+    dest=TEMPLATE,
+    footprint="tiny_pov_footprints:R_0603_hand_solder",
+)
+
+C_0603 = Part(
+    "tiny_pov_symbols",
+    "C",
+    dest=TEMPLATE,
+    footprint="tiny_pov_footprints:C_0603_hand_solder",
 )
 
 C_TH = Part(
@@ -38,14 +65,21 @@ C_TH = Part(
     footprint="tiny_pov_footprints:C_polarized_TH",
 )
 
+L_0603 = Part(
+    "tiny_pov_symbols",
+    "L",
+    dest=TEMPLATE,
+    footprint="tiny_pov_footprints:L_0603_hand_solder",
+)
+
 
 # INTERFACES
 
 power_supply_interface = Interface(
     Vac_a=Net("Vac_a", drive=POWER),
     Vac_b=Net("Vac_b", drive=POWER),
-    Vdd=Net("Vdd"),
-    GND=Net("GND"),
+    Vdd=Net("Vdd", drive=POWER),
+    GND=Net("GND", drive=POWER),
 )
 
 apa102_interface = Interface(
@@ -86,9 +120,10 @@ stm32_interface = Interface(
 # SUBCIRCUITS
 
 
+# 3.3v converter: https://www.diodes.com/assets/Datasheets/AP63200-AP63201-AP63203-AP63205.pdf
+# Full bridge rectifier: https://www.diodes.com/assets/Datasheets/DBF310.pdf
 @subcircuit
 def power_supply(interface):
-    # add resonant cap for inductor
     connector = Part(
         "tiny_pov_symbols",
         "Conn_01x02_Socket",
@@ -109,12 +144,37 @@ def power_supply(interface):
     connector["1"] & interface.Vac_a & rectifier["Vac_a"]
     connector["2"] & interface.Vac_b & rectifier["Vac_b"]
 
-    test_pair = test_point_pair(tag="rectifier_test")
     # Rectifier IC
-    rectifier["V+"] & smoothing_cap[1] & test_pair[1] & interface.Vdd
-    rectifier["V-"] & smoothing_cap[2] & test_pair[2] & interface.GND
+    rectifier["V+"] & smoothing_cap[1]
+    rectifier["V-"] & smoothing_cap[2] & interface.GND
+
+    converter_3_3 = Part(
+        "tiny_pov_symbols",
+        "AP63203WU",
+        footprint="tiny_pov_footprints:TSOT-23-6_HandSoldering",
+        tag="3v3_converter",
+    )
+
+    # See data sheet for typical application circuit of the buck converter
+    rectifier["V+"] & converter_3_3["VIN"] & converter_3_3["EN"]
+    rectifier["V-"] & converter_3_3["GND"]
+    bst_sw_cap = C_0603(value="100 nF", tag="3_3v_bst_sw_cap")
+    output_cap = C_0603(value="22 uF", tag="3_3v_output_cap_a") | C_0603(
+        value="22 uF", tag="3_3v_output_cap_b"
+    )
+    output_ind = L_0603(value="6.8uH", tag="3_3v_output_ind")
+    converter_3_3["BST"] & bst_sw_cap[1]
+    converter_3_3["SW"] & bst_sw_cap[2] & output_ind & interface.Vdd
+    converter_3_3["FB"] += output_ind[2]
+    interface.Vdd & output_cap & interface.GND
+
+    # v_dd_test = test_point(tag="v_dd_test")
+    # v_gnd_test = test_point(tag="v_gnd_test")
+    # interface.Vdd += v_dd_test
+    # interface.GND += v_gnd_test
 
 
+# APA102-2020: https://www.mouser.com/datasheet/2/737/APA102_2020_SMD_LED-2487271.pdf
 @subcircuit
 def apa102_led_strip(num_leds, interface):
     apa102_led = Part(
@@ -125,9 +185,10 @@ def apa102_led_strip(num_leds, interface):
     )
     # First LED connects to the STM32
     led = apa102_led(tag="apa_led_0")
-    test_pair = test_point_pair(tag="APA102_test")
-    led["CKI"] & test_pair[1] & interface.CLK
-    led["SDI"] & test_pair[2] & interface.DATA
+    led_clk_test = test_point(tag="led_clk_test")
+    led_data_test = test_point(tag="led_data_test")
+    led["CKI"] & led_clk_test & interface.CLK
+    led["SDI"] & led_data_test & interface.DATA
 
     led["VDD"] += interface.Vdd
     led["GND"] += interface.GND
@@ -149,6 +210,7 @@ def apa102_led_strip(num_leds, interface):
     led["SDO"] += NC
 
 
+# SD Card Holder: https://tools.molex.com/pdm_docs/sd/5033981892_sd.pdf
 @subcircuit
 def sd_card(interface):
     sd_holder = Part(
@@ -161,32 +223,32 @@ def sd_card(interface):
     # SD card is the only device on the bus, pull it low
     (
         interface.GND
-        & R_0402(value="10k", tag="SD_CS_PULLDOWN")
+        & R_0603(value="10k", tag="SD_CS_PULLDOWN")
         & interface.CS
         & sd_holder["CS"]
     )
 
-    clock_test = test_point_pair(tag="sd_clock_test_points")
-    data_test = test_point_pair(tag="sd_data_test_points")
+    sd_sck_test = test_point(tag="sd_sck_test_point")
+    sd_mosi_test = test_point(tag="sd_mositest_point")
+    sd_miso_test = test_point(tag="sd_miso_test_point")
 
-    interface.GND & clock_test[1]
     # Each data line with a pull up resistor
     (
         sd_holder["SCK"]
-        & clock_test[2]
-        & R_0402(value="47k", tag="SD_SCK_PULLUP")
+        & sd_sck_test
+        & R_0603(value="47k", tag="SD_SCK_PULLUP")
         & interface.SCK
     )
     (
         sd_holder["MOSI"]
-        & data_test[1]
-        & R_0402(value="47k", tag="SD_MOSI_PULLUP")
+        & sd_mosi_test
+        & R_0603(value="47k", tag="SD_MOSI_PULLUP")
         & interface.MOSI
     )
     (
         sd_holder["MISO"]
-        & data_test[2]
-        & R_0402(value="47k", tag="SD_MISO_PULLUP")
+        & sd_miso_test
+        & R_0603(value="47k", tag="SD_MISO_PULLUP")
         & interface.MISO
     )
 
@@ -195,6 +257,7 @@ def sd_card(interface):
     sd_holder["VDD"] & interface.Vdd
 
 
+# Hall effect sensor: https://www.diodes.com/assets/Datasheets/AH1806.pdf
 @subcircuit
 def hall_effect(interface):
     hall = Part(
@@ -208,7 +271,7 @@ def hall_effect(interface):
     hall["OUTPUT"] += interface.DATA
 
 
-# https://www.st.com/resource/en/datasheet/stm32g030c6.pdf
+# STM32G0 (SO8N package): https://www.st.com/resource/en/datasheet/stm32g030c6.pdf
 @subcircuit
 def stm32(interface):
     # Power
@@ -228,7 +291,7 @@ def stm32(interface):
     # When jumper is bridged it will remain in that state and allow for programming.
     stm["NRST"] & interface.RESET
     # Active low, placed in parallel with a 100nF cap as mentioned on page 66 of the data sheet
-    reset_jumper = test_point_pair(tag="reset_jumper")
+    reset_jumper = jumper(tag="reset_jumper")
     reset_cap = C_0402(
         value="100 nF",
         tag="reset_cap",
@@ -252,7 +315,7 @@ def stm32(interface):
 # EXPORTING
 
 power_supply(power_supply_interface)
-apa102_led_strip(10, apa102_interface)
+apa102_led_strip(64, apa102_interface)
 sd_card(sd_card_interface)
 hall_effect(hall_effect_interface)
 stm32(stm32_interface)
