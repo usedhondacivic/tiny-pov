@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "tiny_pov_footprints")(type "KiCad")(uri "/home/michael/Documents/projects/tiny-pov/HARDWARE/tiny_pov_footprints.pretty")(options "")(descr ""))
+)
