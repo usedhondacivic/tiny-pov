@@ -1,4 +1,5 @@
 cmsis_m0
+cmsis_core
 *.elf
 *.elf.map
 *.bin
