@@ -1,0 +1,17 @@
+"Id";"Designator";"Footprint";"Quantity";"Designation";"Supplier and ref";
+1;"TP1,TP2,TP3,TP4,TP5";"TestPoint_Pad";5;"TestPoint";;;
+2;"J1";"PinHeader_1x02";1;"Conn_01x02_Socket";;;
+3;"D13,D10,D46,D20,D7,D54,D9,D3,D57,D41,D60,D59,D25,D35,D33,D15,D49,D55,D48,D6,D4,D61,D52,D23,D56,D64,D39,D30,D18,D24,D32,D16,D40,D37,D45,D5,D44,D50,D34,D14,D43,D51,D21,D2,D28,D8,D1,D11,D26,D63,D36,D19,D27,D53,D38,D62,D12,D22,D42,D47,D31,D17,D58,D29";"LED-APA102-2020";64;"APA102-2020";;;
+4;"C4,C3";"C_0603_hand_solder";2;"22 uF";;;
+5;"R2,R3,R4";"R_0603_hand_solder";3;"47k";;;
+6;"JP1";"SolderJumper";1;"SolderJumper_2_Open";;;
+7;"R1";"R_0603_hand_solder";1;"10k";;;
+8;"U3";"STM32_SO_8N";1;"STM32G030J6Mx";;;
+9;"BR1";"DBF_DIO";1;"DBF310-13";;;
+10;"C1";"C_polarized_TH";1;"? uF";;;
+11;"J2";"microSD";1;"SdHolder";;;
+12;"U1";"TSOT-23-6_HandSoldering";1;"AP63203WU";;;
+13;"C2,C6";"C_0603_hand_solder";2;"100 nF";;;
+14;"U2";"SC-59_Handsoldering";1;"AH1806W";;;
+15;"C5";"C_polarized_TH";1;"100 uF";;;
+16;"L1";"L_0603_hand_solder";1;"6.8uH";;;
