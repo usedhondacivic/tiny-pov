@@ -1,7 +1,7 @@
 # Hardware
 
 The Tiny-pov circuit boards were designed using [SKiDL](https://devbisme.github.io/skidl/), a python library for generating KiCAD schematics from python code. 
-The SKiDL source code for the PCBs is found in `arm_board.py` and `motor_boar.py`. The KiCAD symbol and schematic libraries for all components is included, so it should run without any hassle.
+The SKiDL source code for the PCBs is found in `arm_board.py` and `motor_board.py`. The KiCAD symbol and schematic libraries for all components is included, so it should run without any hassle.
 
 ```cd HARDWARE && python3 arm_board.py```
 
