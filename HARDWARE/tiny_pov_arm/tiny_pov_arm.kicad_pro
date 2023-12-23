@@ -477,23 +477,11 @@
       },
       {
         "netclass": "high_current",
-        "pattern": "N$30"
-      },
-      {
-        "netclass": "high_current",
         "pattern": "Vdd"
       },
       {
         "netclass": "high_current",
-        "pattern": "N$29"
-      },
-      {
-        "netclass": "medium_current",
-        "pattern": "N$34"
-      },
-      {
-        "netclass": "medium_current",
-        "pattern": "N$33"
+        "pattern": "V_rect_plus"
       }
     ]
   },

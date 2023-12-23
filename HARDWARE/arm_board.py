@@ -93,7 +93,7 @@ sd_card_interface = Interface(
     SCK=Net("SD_SCK"),
     MOSI=Net("SD_MOSI"),
     MISO=Net("SD_MISO"),
-    CS=Net(),
+    CS=Net("SD_CS"),
     Vdd=power_supply_interface.Vdd,
     GND=power_supply_interface.GND,
 )
@@ -111,7 +111,6 @@ stm32_interface = Interface(
     sd_mosi=sd_card_interface.MOSI,
     sd_miso=sd_card_interface.MISO,
     hall_data=hall_effect_interface.DATA,
-    RESET=Net(),
     Vdd=power_supply_interface.Vdd,
     GND=power_supply_interface.GND,
 )
@@ -156,16 +155,16 @@ def power_supply(interface):
     )
 
     # See data sheet for typical application circuit of the buck converter
-    rectifier["V+"] & converter_3_3["VIN"] & converter_3_3["EN"]
+    Net("V_rect_plus") & rectifier["V+"] & converter_3_3["VIN"] & converter_3_3["EN"]
     rectifier["V-"] & converter_3_3["GND"]
     bst_sw_cap = C_0603(value="100 nF", tag="3_3v_bst_sw_cap")
     output_cap = C_0603(value="22 uF", tag="3_3v_output_cap_a") | C_0603(
         value="22 uF", tag="3_3v_output_cap_b"
     )
     output_ind = L_0603(value="6.8uH", tag="3_3v_output_ind")
-    converter_3_3["BST"] & bst_sw_cap[1]
-    converter_3_3["SW"] & bst_sw_cap[2] & output_ind & interface.Vdd
-    converter_3_3["FB"] += output_ind[2]
+    Net("BST") & converter_3_3["BST"] & bst_sw_cap[1]
+    Net("SW") & converter_3_3["SW"] & bst_sw_cap[2] & output_ind & interface.Vdd
+    converter_3_3["FB"] & output_ind[2]
     interface.Vdd & output_cap & interface.GND
 
     # v_dd_test = test_point(tag="v_dd_test")
@@ -200,8 +199,8 @@ def apa102_led_strip(num_leds, interface):
     # All other LEDs connect to the previous LED
     for i in range(num_leds - 1):
         new_led = apa102_led(tag=f"apa_led_{i + 1}")
-        led["CKO"] += new_led["CKI"]
-        led["SDO"] += new_led["SDI"]
+        led["CKO"] & Net(f"apa_led_{i}_{i+1}_CK") & new_led["CKI"]
+        led["SDO"] & Net(f"apa_led_{i}_{i+1}_SD") &  new_led["SDI"]
         new_led["VDD"] += interface.Vdd
         new_led["GND"] += interface.GND
         led = new_led
@@ -236,25 +235,25 @@ def sd_card(interface):
     (
         sd_holder["SCK"]
         & sd_sck_test
-        & R_0603(value="47k", tag="SD_SCK_PULLUP")
+        & tee(R_0603(value="47k", tag="SD_SCK_PULLUP") & interface.Vdd)
         & interface.SCK
     )
     (
         sd_holder["MOSI"]
         & sd_mosi_test
-        & R_0603(value="47k", tag="SD_MOSI_PULLUP")
+        & tee(R_0603(value="47k", tag="SD_MOSI_PULLUP") & interface.Vdd)
         & interface.MOSI
     )
     (
         sd_holder["MISO"]
         & sd_miso_test
-        & R_0603(value="47k", tag="SD_MISO_PULLUP")
+        & tee(R_0603(value="47k", tag="SD_MISO_PULLUP") & interface.Vdd)
         & interface.MISO
     )
 
-    # Power and ground
-    sd_holder["GND"] & interface.GND
+    # Power and ground sd_holder["GND"] & interface.GND
     sd_holder["VDD"] & interface.Vdd
+    sd_holder["GND"] & interface.GND
 
 
 # Hall effect sensor: https://www.diodes.com/assets/Datasheets/AH1806.pdf
@@ -289,7 +288,6 @@ def stm32(interface):
     # Reset will be used as GPIO
     # Upon power cycle, reset gets mapped back to NRST.
     # When jumper is bridged it will remain in that state and allow for programming.
-    stm["NRST"] & interface.RESET
     # Active low, placed in parallel with a 100nF cap as mentioned on page 66 of the data sheet
     reset_jumper = jumper(tag="reset_jumper")
     reset_cap = C_0402(
@@ -297,16 +295,16 @@ def stm32(interface):
         tag="reset_cap",
     )
     stm["NRST"] & reset_jumper & interface.GND
-    stm["NRST"] & reset_cap & interface.GND  # place close to chip
+    stm["NRST"] & reset_cap & interface.GND # place close to chip
 
     # APA102s
-    stm["p7"] += interface.led_clk
-    stm["p6"] += interface.led_data
+    interface.led_clk += stm["p7"] 
+    interface.led_data += stm["p6"] 
 
     # SD card
-    stm["p1"] += interface.sd_sck
-    stm["p8"] += interface.sd_miso
-    stm["p5"] += interface.sd_mosi
+    interface.sd_sck += stm["p1"]
+    interface.sd_miso += stm["p8"]
+    interface.sd_mosi += stm["p5"]
 
     # Hall Effect
     stm["NRST"] += interface.hall_data  # :|

@@ -7,7 +7,7 @@ CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 $(EXTRA_CFLAGS)
 LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map
 SOURCES = main.c syscalls.c
-SOURCES += cmsis_f4/Source/Templates/gcc/startup_stm32g030xx.s # ST startup file. Compiler-dependent!
+SOURCES += cmsis_m0/Source/Templates/gcc/startup_stm32g030xx.s # ST startup file. Compiler-dependent!
 
 ifeq ($(OS),Windows_NT)
   RM = cmd /C del /Q /F
@@ -17,7 +17,7 @@ endif
 
 build: firmware.bin
 
-firmware.elf: cmsis_core cmsis_f4 hal.h link.ld Makefile $(SOURCES) 
+firmware.elf: cmsis_core cmsis_m0 hal.h link.ld Makefile $(SOURCES) 
 	arm-none-eabi-gcc $(SOURCES) $(CFLAGS) $(CFLAGS_EXTRA) $(LDFLAGS) -o $@
 
 firmware.bin: firmware.elf
