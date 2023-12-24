@@ -3,11 +3,12 @@
 CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -Wformat-truncation -fno-common -Wconversion \
             -g3 -Os -ffunction-sections -fdata-sections \
-            -I. -Iinclude -Icmsis_core/CMSIS/Core/Include -Icmsis_f4/Include \
-            -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 $(EXTRA_CFLAGS)
+            -I. -Iinclude -Icmsis_core/CMSIS/Core/Include -Icmsis_m0/Include -DSTM32G030xx \
+            -mcpu=cortex-m0plus -mthumb  $(EXTRA_CFLAGS)
 LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map
 SOURCES = main.c syscalls.c
 SOURCES += cmsis_m0/Source/Templates/gcc/startup_stm32g030xx.s # ST startup file. Compiler-dependent!
+SOURCES += cmsis_m0/Source/Templates/system_stm32g0xx.c
 
 ifeq ($(OS),Windows_NT)
   RM = cmd /C del /Q /F
@@ -24,7 +25,7 @@ firmware.bin: firmware.elf
 	arm-none-eabi-objcopy -O binary $< $@
 
 flash: firmware.bin
-	st-flash --reset write $< 0x8000000
+	st-flash --connect-under-reset write $< 0x8000000
 
 cmsis_core:
 	git clone --depth 1 -b 5.9.0 https://github.com/ARM-software/CMSIS_5 $@

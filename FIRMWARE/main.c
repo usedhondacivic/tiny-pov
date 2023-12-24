@@ -1,19 +1,19 @@
+#include "hal.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 int main(void)
 {
-	return 0; // Do nothing so far
-}
+	uint16_t led = PIN('B', 6);
+	gpio_set_mode(led, GPIO_MODE_OUTPUT);
+	gpio_write(led, true);
 
-// Startup code
-__attribute__((naked, noreturn)) void _reset(void)
-{
-	// memset .bss to zero, and copy .data section to RAM region
-	extern long _sbss, _ebss, _sdata, _edata, _sidata;
-	for (long *dst = &_sbss; dst < &_ebss; dst++)
-		*dst = 0;
-	for (long *dst = &_sdata, *src = &_sidata; dst < &_edata;)
-		*dst++ = *src++;
-
-	main(); // Call main()
-	for (;;)
-		(void)0; // Infinite loop in the case if main() returns
+	// Blink the LED.
+	while (1) {
+		spin(16000000);
+		gpio_write(led, false);
+		spin(16000000);
+		gpio_write(led, true);
+	}
+	return 0;
 }

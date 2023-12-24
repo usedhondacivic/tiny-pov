@@ -4,3 +4,4 @@ cmsis_core
 *.elf.map
 *.bin
 *.o
+compile_commands.json
