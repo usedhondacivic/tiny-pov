@@ -1,5 +1,7 @@
 # tiny-pov
 
+![image](https://github.com/usedhondacivic/tiny-pov/assets/35321557/2bd44f8f-d008-41bb-bf2d-6a4294a6f2b6)
+
 Work in progress, check back soon for more.
 
 [Checkout the GUI](http://michael-crum.com/tiny-pov/) for a sneak peak.
