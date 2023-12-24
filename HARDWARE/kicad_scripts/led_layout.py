@@ -5,7 +5,7 @@ board = pcbnew.GetBoard()
 fp_list = board.GetFootprints()
 
 def get_point_mm(x, y):
-    return pcbnew.VECTOR2I(pcbnew.wxPoint(x * 10e5, y * 10e5))
+    return pcbnew.VECTOR2I(pcbnew.wxPoint(x * 1e6, y * 1e6))
 
 def layout_leds(count, spacing, offset_x = 0, offset_y = 0):
     for i in range(count):
