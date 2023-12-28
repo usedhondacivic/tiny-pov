@@ -16,3 +16,5 @@
  * 5.2.6: SYSCLK Selection
  * */
 void init_clock();
+
+void init_systick(unsigned int ticks);

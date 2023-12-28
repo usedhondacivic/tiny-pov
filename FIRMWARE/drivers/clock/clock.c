@@ -12,6 +12,8 @@
 
 #include "clock.h"
 
+#define SYS_FREQUENCY 64000000
+
 /*
  * Configure system clock use the PLL.
  * PLL takes HSI16 (16 MHz by default) and applies a 4x multiplier for a total
@@ -58,4 +60,16 @@ void init_clock()
 
 	// 6. Switch system clock to PLLR
 	RCC->CFGR |= 0b010 << RCC_CFGR_SW_Pos;
+}
+
+void init_systick(unsigned int ticks)
+{
+	SysTick_Config(ticks);
+}
+
+void SystemInit(void)
+{
+	init_clock();
+	RCC->APBENR2 |= RCC_APBENR2_SYSCFGEN;
+	SysTick_Config(SYS_FREQUENCY / 1000);
 }
