@@ -62,14 +62,23 @@ void init_clock()
 	RCC->CFGR |= 0b010 << RCC_CFGR_SW_Pos;
 }
 
-void init_systick(unsigned int ticks)
-{
-	SysTick_Config(ticks);
-}
-
+/*
+ * SystemInit is a special function called by CMSIS during initialization
+ */
 void SystemInit(void)
 {
 	init_clock();
+	// Enable clock to SysTick
 	RCC->APBENR2 |= RCC_APBENR2_SYSCFGEN;
+	// Generate interupt every milisecond
 	SysTick_Config(SYS_FREQUENCY / 1000);
+}
+
+/*
+ * SysTick_Handler is configured as the SysTick interupt handler
+ */
+static volatile uint32_t s_ticks;
+void SysTick_Handler(void)
+{
+	s_ticks++;
 }
