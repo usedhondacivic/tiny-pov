@@ -1,5 +1,3 @@
-# https://github.com/cpq/bare-metal-programming-guide
-
 CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -Wformat-truncation -fno-common -Wconversion \
             -g3 -Os -ffunction-sections -fdata-sections \

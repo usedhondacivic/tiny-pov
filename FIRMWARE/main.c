@@ -14,9 +14,9 @@ int main(void)
 
 	// Blink the LED.
 	while (1) {
-		spin(1000000);
+		spin(16000000);
 		gpio_write(led, 0);
-		spin(1000000);
+		spin(16000000);
 		gpio_write(led, 1);
 	}
 	return 0;
