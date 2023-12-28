@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 /*
  * REFERENCE
  * 5.2.3: PLL
@@ -17,4 +19,4 @@
  * */
 void init_clock();
 
-void init_systick(unsigned int ticks);
+extern volatile uint32_t s_ticks;

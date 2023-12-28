@@ -7,7 +7,6 @@ LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--
 SOURCES = main.c syscalls.c 
 SOURCES += $(wildcard drivers/**/*.c)
 SOURCES += cmsis_m0/Source/Templates/gcc/startup_stm32g030xx.s # ST startup file. Compiler-dependent!
-# SOURCES += cmsis_m0/Source/Templates/system_stm32g0xx.c
 
 HEADERS = $(wildcard drivers/**/*.h)
 HEADERS += util.h

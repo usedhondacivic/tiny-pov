@@ -2,8 +2,11 @@
 
 #include <stdint.h>
 
-void spin(volatile uint32_t count)
+#include "drivers/clock/clock.h"
+
+void delay(unsigned ms)
 {
-	while (count--)
-		asm("nop");
+	uint32_t until = s_ticks + ms;
+	while (s_ticks < until)
+		(void)0;
 }

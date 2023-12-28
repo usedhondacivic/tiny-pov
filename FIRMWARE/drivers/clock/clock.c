@@ -77,7 +77,7 @@ void SystemInit(void)
 /*
  * SysTick_Handler is configured as the SysTick interupt handler
  */
-static volatile uint32_t s_ticks;
+volatile uint32_t s_ticks;
 void SysTick_Handler(void)
 {
 	s_ticks++;
