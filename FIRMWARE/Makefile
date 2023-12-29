@@ -1,6 +1,6 @@
 CFLAGS  ?=  -W -Wall -Wextra -Werror -Wundef -Wshadow -Wdouble-promotion \
             -Wformat-truncation -fno-common -Wconversion \
-            -g3 -Os -ffunction-sections -fdata-sections \
+            -g3 -O3 -ffunction-sections -fdata-sections \
             -I. -Iinclude -Icmsis_core/CMSIS/Core/Include -Icmsis_m0/Include -DSTM32G030xx \
             -mcpu=cortex-m0plus -mthumb  $(EXTRA_CFLAGS)
 LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map

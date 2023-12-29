@@ -19,7 +19,7 @@ uint16_t data_pin = PIN('A', 12);
 
 const uint8_t start_frame[] = { 0x00, 0x00, 0x00, 0x00 };
 const uint8_t end_frame[] = { 0xFF, 0xFF, 0xFF, 0xFF };
-const uint8_t brightness_byte = 87;
+const uint8_t brightness_byte = 0xE1;
 
 void write_word(uint8_t *data);
 void write_byte(uint8_t data);
@@ -57,7 +57,7 @@ void write_byte(const uint8_t data)
 {
 	for (int i = 0; i < 8; i++) {
 		gpio_write(clk_pin, 0);
-		uint8_t bit = (data >> i) & 0b1u;
+		uint8_t bit = (data >> (7 - i)) & 0b1u;
 		gpio_write(data_pin, bit);
 		gpio_write(clk_pin, 1);
 	}
