@@ -34,3 +34,5 @@ void gpio_set_mode(uint16_t pin, uint8_t mode);
 void gpio_set_af(uint16_t pin, uint8_t af_num);
 
 void gpio_write(uint16_t pin, bool val);
+
+void gpio_set_highspeed(uint16_t pin);

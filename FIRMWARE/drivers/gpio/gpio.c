@@ -37,3 +37,11 @@ void gpio_write(uint16_t pin, bool val)
 	GPIO_TypeDef *gpio = GPIO(PINBANK(pin));
 	gpio->BSRR = (1U << PINNO(pin)) << (val ? 0 : 16);
 }
+
+void gpio_set_highspeed(uint16_t pin)
+{
+	GPIO_TypeDef *gpio = GPIO(PINBANK(pin));
+	int n = PINNO(pin);					 // Pin number
+	gpio->OSPEEDR &= ~(3U << (n * 2));	 // Clear existing setting
+	gpio->OSPEEDR |= (0b11u) << (n * 2); // Set new mode
+}
