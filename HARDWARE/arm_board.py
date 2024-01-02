@@ -180,7 +180,7 @@ def apa102_led_strip(num_leds, interface):
         "tiny_pov_symbols",
         "APA102-2020",
         dest=TEMPLATE,
-        footprint="tiny_pov_footprints:LED-APA102-2020",
+        footprint="tiny_pov_footprints:LED_APA-102-2020-256-8",
     )
     # First LED connects to the STM32
     led = apa102_led(tag="apa_led_0")
@@ -219,7 +219,7 @@ def sd_card(interface):
         tag="sd_holder",
     )
 
-    # SD card is the only device on the bus, pull it low
+    # SD card is the only device on the bus, pull CS low
     (
         interface.GND
         & R_0603(value="10k", tag="SD_CS_PULLDOWN")
@@ -251,9 +251,9 @@ def sd_card(interface):
         & interface.MISO
     )
 
-    # Power and ground sd_holder["GND"] & interface.GND
+    # Power and ground
     sd_holder["VDD"] & interface.Vdd
-    sd_holder["GND"] & interface.GND
+    sd_holder["GND"] & interface.GND & sd_holder[11]
 
 
 # Hall effect sensor: https://www.diodes.com/assets/Datasheets/AH1806.pdf
@@ -290,15 +290,17 @@ def stm32(interface):
     # When jumper is bridged it will remain in that state and allow for programming.
     # Active low, placed in parallel with a 100nF cap as mentioned on page 66 of the data sheet
     reset_jumper = jumper(tag="reset_jumper")
-    reset_cap = C_0402(
-        value="100 nF",
-        tag="reset_cap",
-    )
     stm["NRST"] & reset_jumper & interface.GND
-    stm["NRST"] & reset_cap & interface.GND # place close to chip
+    
+    # Because NRST will be remapped, no need for the smoothing cap
+    # reset_cap = C_0402(
+    #     value="100 nF",
+    #     tag="reset_cap",
+    # )
+    # stm["NRST"] & reset_cap & interface.GND # place close to chip
 
     # APA102s
-    interface.led_clk += stm["p7"] 
+    interface.led_clk += stm["p4"] 
     interface.led_data += stm["p6"] 
 
     # SD card
@@ -307,7 +309,7 @@ def stm32(interface):
     interface.sd_mosi += stm["p5"]
 
     # Hall Effect
-    stm["NRST"] += interface.hall_data  # :|
+    stm["p7"] += interface.hall_data  # :|
 
 
 # EXPORTING
