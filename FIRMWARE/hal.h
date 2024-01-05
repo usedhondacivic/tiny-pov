@@ -2,7 +2,7 @@
  * Author: Michael Crum
  * Date: 12/25/2023
  *
- * Hardware abstraction layer for the STM32G030 MCU
+ * Hardware abstraction layer for the STM32G031 MCU
  *
  * MCU reference manual:
  * https://www.st.com/resource/en/reference_manual/rm0444-stm32g0x1-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
