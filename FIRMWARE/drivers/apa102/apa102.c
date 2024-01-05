@@ -45,24 +45,24 @@ void init_apa102(volatile SPI_TypeDef *chan)
 
 	// 2. Write to the SPI_CR1 register
 	// a) Configure the serial clock baud rate (f_{pclk} / 2)
-	SPI1->CR1 &= ~(SPI_CR1_BR_Msk);
+	chan->CR1 &= ~(SPI_CR1_BR_Msk);
 	// b) Configure the CPOL and CPHA bits (leave default)
 	// c) Select simplex or half-duplex mode (half-duplex, tx-only)
-	SPI1->CR1 |= SPI_CR1_BIDIMODE_Msk;
-	SPI1->CR1 |= SPI_CR1_BIDIOE_Msk;
+	chan->CR1 |= SPI_CR1_BIDIMODE_Msk;
+	chan->CR1 |= SPI_CR1_BIDIOE_Msk;
 	// d) Configure the LSBFIRST bit to define the frame format (LSB first)
-	SPI1->CR1 &= ~(SPI_CR1_LSBFIRST_Msk);
-	// SPI1->CR1 |= SPI_CR1_LSBFIRST_Msk;
+	chan->CR1 &= ~(SPI_CR1_LSBFIRST_Msk);
+	// chan->CR1 |= SPI_CR1_LSBFIRST_Msk;
 	// e) Configure the CRCL and CRCEN bits if CRC is needed (Defaults disabled)
 	// f) Configure SSM and SSI (Defaults disabled)
 	// g) Configure the MSTR bit (Master)
-	SPI1->CR1 |= SPI_CR1_MSTR_Msk;
+	chan->CR1 |= SPI_CR1_MSTR_Msk;
 
 	// 3. Write to SPI_CR2 register
 	// a) Configure the DS[3:0] bits to select the data length for the transfer
 	// (8-bit default)
 	// b) Configure SSOE (Defaults disabled)
-	SPI1->CR2 |= SPI_CR2_SSOE_Msk;
+	chan->CR2 |= SPI_CR2_SSOE_Msk;
 	// c) Set the FRF bit if the TI protocol is required (Defaults disabled)
 	// d) Set the NSSP bit if the NSS pulse mode between two data units is
 	// required (Defaults disabled)
@@ -71,14 +71,14 @@ void init_apa102(volatile SPI_TypeDef *chan)
 	// needed until DMA)
 	// 4) Enable SPI
 	//
-	SPI1->CR1 |= SPI_CR1_SPE_Msk;
+	chan->CR1 |= SPI_CR1_SPE_Msk;
 	channel = chan;
 }
 
 void write_sequence(const uint8_t *data, uint16_t len)
 {
 	for (int i = 0; i < len; i++) {
-		while ((SPI1->SR | SPI_SR_TXE_Msk) == 0) {
+		while ((channel->SR | SPI_SR_TXE_Msk) == 0) {
 		};
 		*((volatile uint8_t *)&(channel->DR)) = data[i];
 	}
