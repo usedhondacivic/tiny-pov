@@ -14,7 +14,7 @@
 
 #include <stdbool.h>
 
-#include <stm32g030xx.h>
+#include <stm32g031xx.h>
 
 #define FREQ 64000000 // CPU frequency, 64 Mhz
 #define BIT(x) (1UL << (x))

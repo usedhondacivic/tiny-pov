@@ -8,7 +8,7 @@
  * https://www.st.com/resource/en/reference_manual/rm0444-stm32g0x1-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
  */
 
-#include "stm32g030xx.h"
+#include "stm32g031xx.h"
 
 #include "clock.h"
 
@@ -68,7 +68,7 @@ void init_clock()
 void SystemInit(void)
 {
 	init_clock();
-	// Enable clock to SysTick
+	//  Enable clock to SysTick
 	RCC->APBENR2 |= RCC_APBENR2_SYSCFGEN;
 	// Generate interupt every milisecond
 	SysTick_Config(SYS_FREQUENCY / 1000);
