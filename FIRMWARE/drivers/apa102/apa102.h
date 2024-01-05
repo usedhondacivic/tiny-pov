@@ -15,6 +15,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-void init_apa102(SPI_TypeDef *chan);
+void init_apa102(volatile SPI_TypeDef *chan);
 
 void apa102_write_strip(uint8_t *data);
