@@ -20,7 +20,7 @@
 
 #define NUM_LEDS 64
 
-volatile SPI_TypeDef *channel;
+static volatile SPI_TypeDef *channel;
 
 static const uint8_t end_frame[] = { 0xFF, 0xFF, 0xFF, 0xFF };
 static const uint8_t start_frame[] = { 0x00, 0x00, 0x00, 0x00 };
@@ -50,9 +50,8 @@ void init_apa102(volatile SPI_TypeDef *chan)
 	// c) Select simplex or half-duplex mode (half-duplex, tx-only)
 	chan->CR1 |= SPI_CR1_BIDIMODE_Msk;
 	chan->CR1 |= SPI_CR1_BIDIOE_Msk;
-	// d) Configure the LSBFIRST bit to define the frame format (LSB first)
+	// d) Configure the LSBFIRST bit to define the frame format (MSB first)
 	chan->CR1 &= ~(SPI_CR1_LSBFIRST_Msk);
-	// chan->CR1 |= SPI_CR1_LSBFIRST_Msk;
 	// e) Configure the CRCL and CRCEN bits if CRC is needed (Defaults disabled)
 	// f) Configure SSM and SSI (Defaults disabled)
 	// g) Configure the MSTR bit (Master)
@@ -61,7 +60,7 @@ void init_apa102(volatile SPI_TypeDef *chan)
 	// 3. Write to SPI_CR2 register
 	// a) Configure the DS[3:0] bits to select the data length for the transfer
 	// (8-bit default)
-	// b) Configure SSOE (Defaults disabled)
+	// b) Configure SSOE (SS enabled, needed for tx-only)
 	chan->CR2 |= SPI_CR2_SSOE_Msk;
 	// c) Set the FRF bit if the TI protocol is required (Defaults disabled)
 	// d) Set the NSSP bit if the NSS pulse mode between two data units is
@@ -78,7 +77,7 @@ void init_apa102(volatile SPI_TypeDef *chan)
 void write_sequence(const uint8_t *data, uint16_t len)
 {
 	for (int i = 0; i < len; i++) {
-		while ((channel->SR | SPI_SR_TXE_Msk) == 0) {
+		while (!(channel->SR & SPI_SR_TXE_Msk)) {
 		};
 		*((volatile uint8_t *)&(channel->DR)) = data[i];
 	}
