@@ -33,6 +33,8 @@ int main(void)
 	gpio_set_af(apa102_miso_pin, 0);
 	gpio_set_highspeed(apa102_miso_pin);
 
+	gpio_set_mode(PIN('B', 7), GPIO_MODE_OUTPUT);
+
 	// Init peripherals
 
 	// init_apa102(SPI1);

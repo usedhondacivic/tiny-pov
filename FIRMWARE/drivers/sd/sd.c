@@ -11,11 +11,26 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "drivers/gpio/gpio.h"
 #include "sd.h"
 #include "stm32g031xx.h"
 #include "util.h"
 
 static volatile SPI_TypeDef *channel;
+
+uint8_t get_cmd_byte(uint8_t num)
+{
+	return (0b01 << 6) | (num & 0b00111111);
+}
+
+void get_cmd(uint8_t *buff, uint8_t cmd_num, uint8_t *args, uint8_t crc)
+{
+	buff[0] = get_cmd_byte(cmd_num);
+	for (uint8_t i = 0; i < 4; i++) {
+		buff[i + 1] = args[i];
+	}
+	buff[5] = (uint8_t)(crc << 1) | 0b1;
+}
 
 void spi_write_sequence(const uint8_t *data, uint16_t len)
 {
@@ -49,6 +64,9 @@ void spi_read_sequence(uint8_t *buff, uint16_t len)
 			i++;
 		}
 	}
+	while (!(channel->SR & SPI_SR_TXE_Msk)) {
+	};
+	*((volatile uint8_t *)&(channel->DR)) = 0xFF;
 }
 
 /*
@@ -99,27 +117,64 @@ void init_sd(SPI_TypeDef *chan)
 
 	channel = chan;
 
-	delay(300);
+	delay(10);
+
+	gpio_write(PIN('B', 7), 1);
 
 	uint8_t sd_spi_init[10];
 	for (int i = 0; i < 10; i++) {
 		sd_spi_init[i] = 0xFF;
 	}
 
-	spi_write_sequence(sd_spi_init, 3);
-	delay(1);
 	spi_write_sequence(sd_spi_init, 10);
-	uint8_t CMD0[] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
+	// uint8_t CMD0[] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
+	uint8_t CMD0[6];
+	get_cmd(CMD0, 0, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A);
 	spi_write_sequence(CMD0, 6);
-	delay(1);
 	spi_read_sequence(0, 1);
-	delay(1);
+
+	// 0x48000001AA0F
+	uint8_t CMD8[6];
+	get_cmd(CMD8, 8, (uint8_t[]){ 0x00, 0x00, 0x01, 0xAA }, 0x0F);
+	spi_write_sequence(CMD8, 6);
+	uint8_t CMD8_resp[5];
+	spi_read_sequence(CMD8_resp, 5);
+
 	// 0x7A0000000075
-	uint8_t CMD58[] = { 0x7A, 0x00, 0x00, 0x00, 0x00, 0x75 };
+	// uint8_t CMD58[] = { 0x7A, 0x00, 0x00, 0x00, 0x00, 0x75 };
+	uint8_t CMD58[6];
+	get_cmd(CMD58, 58, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x75);
 	spi_write_sequence(CMD58, 6);
-	delay(1);
 	uint8_t CMD58_resp[5];
 	spi_read_sequence(CMD58_resp, 5);
+
+	uint8_t CMD55[6];
+	uint8_t ACMD41[6];
+	get_cmd(CMD55, 55, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x00);
+	get_cmd(ACMD41, 41, (uint8_t[]){ 0x40, 0x00, 0x00, 0x00 }, 0x00);
+	uint8_t attempts = 0;
+	uint8_t resp[1] = { 0x01 };
+	while ((*resp) != 0x00 && attempts < 50) {
+		spi_write_sequence(CMD55, 6);
+		spi_read_sequence(0, 1);
+		spi_write_sequence(ACMD41, 6);
+		spi_read_sequence(resp, 1);
+		delay(5);
+	}
+
+	// uint8_t CMD1[] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0x95 };
+	// // get_cmd(CMD1, 1, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x95);
+	// uint8_t resp[1] = { 0x01 };
+	// uint8_t attempts = 0;
+	// while ((*resp) == 0x01 && attempts < 15) {
+	// 	spi_write_sequence(CMD1, 6);
+	// 	spi_read_sequence(resp, 1);
+	// 	attempts++;
+	// 	delay(500);
+	// }
+	// spi_write_sequence(CMD1, 6);
+	// spi_read_sequence(0, 1);
+	// delay(1);
 }
 
 void sd_read(uint32_t len) {}
