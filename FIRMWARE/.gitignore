@@ -6,3 +6,4 @@ cmsis_core
 *.o
 compile_commands.json
 .cache
+*.img

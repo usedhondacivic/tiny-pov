@@ -3,18 +3,23 @@
  * Date: 1/5/2023
  *
  * SD card driver for the STM32g031
+ * Operates an SD card in SPI Mode
+ * Only supports SD v2.00 or later
  *
  * MCU reference manual:
  * https://www.st.com/resource/en/reference_manual/rm0444-stm32g0x1-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+ *
+ * SD Spec:
+ * https://www.sdcard.org/downloads/pls/pdf/?p=Part1_Physical_Layer_Simplified_Specification_Ver9.10.jpg&f=Part1PhysicalLayerSimplifiedSpecificationVer9.10Fin_20231201.pdf&e=EN_SS9_1
  */
 
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "drivers/gpio/gpio.h"
+#include "drivers/spi/spi.h"
 #include "sd.h"
 #include "stm32g031xx.h"
-#include "util.h"
 
 static volatile SPI_TypeDef *channel;
 
@@ -23,7 +28,10 @@ uint8_t get_cmd_byte(uint8_t num)
 	return (0b01 << 6) | (num & 0b00111111);
 }
 
-void get_cmd(uint8_t *buff, uint8_t cmd_num, uint8_t *args, uint8_t crc)
+void get_cmd(uint8_t *buff,
+			 const uint8_t cmd_num,
+			 const uint8_t *args,
+			 const uint8_t crc)
 {
 	buff[0] = get_cmd_byte(cmd_num);
 	for (uint8_t i = 0; i < 4; i++) {
@@ -32,51 +40,48 @@ void get_cmd(uint8_t *buff, uint8_t cmd_num, uint8_t *args, uint8_t crc)
 	buff[5] = (uint8_t)(crc << 1) | 0b1;
 }
 
-void spi_write_sequence(const uint8_t *data, uint16_t len)
+void send_sd_cmd(const uint8_t cmd_num,
+				 const uint8_t *args,
+				 const uint8_t crc,
+				 uint8_t *resp_buff,
+				 uint8_t resp_length)
 {
-	for (int i = 0; i < len; i++) {
-		while (!(channel->SR & SPI_SR_TXE_Msk)) {
-		};
-		*((volatile uint8_t *)&(channel->DR)) = data[i];
-	}
-}
+	// Send command string
+	uint8_t cmd_buff[6];
+	get_cmd(cmd_buff, cmd_num, args, crc);
+	spi_write_sequence(channel, cmd_buff, 6);
 
-void spi_read_sequence(uint8_t *buff, uint16_t len)
-{
-	bool start_cond = false;
+	// SD card might need clock cycles to work, during which it will respond
+	// 0xFF. Keep the clock going until a non-0xFF byte is recieved, then start
+	// recording the response.
 	uint8_t i = 0;
-	while (i < len) {
-		while (!(channel->SR & SPI_SR_TXE_Msk)) {
-		};
-		*((volatile uint8_t *)&(channel->DR)) = 0xFF;
-		while (!(channel->SR & SPI_SR_RXNE_Msk) ||
-			   channel->SR & SPI_SR_BSY_Msk) {
-		};
+	bool start_cond = false;
+	while (i < resp_length) {
 		uint8_t read;
-		while (channel->SR & SPI_SR_RXNE_Msk) {
-			read = *(((volatile uint8_t *)&(channel->DR)));
-		};
+		spi_read_sequence(channel, &read, 1);
 		if (read != 0xFF)
 			start_cond = true;
 		if (start_cond) {
-			if (buff != 0)
-				buff[i] = read;
+			if (resp_buff != 0)
+				resp_buff[i] = read;
 			i++;
 		}
 	}
-	while (!(channel->SR & SPI_SR_TXE_Msk)) {
-	};
-	*((volatile uint8_t *)&(channel->DR)) = 0xFF;
+
+	// The card might need some cycles after the response to clean up. Keep the
+	// clock going for eight cycles.
+	spi_write_sequence(channel, (uint8_t[]){ 0xFF }, 1);
 }
 
 /*
  * REFERENCE:
- * 27.5.7 Configuration of SPI
+ * STM32g031x: 27.5.7 Configuration of SPI
+ * SD Simplifed Spec: 7.2.1 Mode Selection and Initialization
  *
  * sck_pin, mosi_pin, and miso_pin must be preconfigured to the appropriate AF
  */
 
-void init_sd(SPI_TypeDef *chan)
+bool init_sd(SPI_TypeDef *chan)
 {
 	if (chan == SPI1)
 		RCC->APBENR2 |= RCC_APBENR2_SPI1EN_Msk;
@@ -117,64 +122,41 @@ void init_sd(SPI_TypeDef *chan)
 
 	channel = chan;
 
-	delay(10);
-
 	gpio_write(PIN('B', 7), 1);
 
+	// Min 74 cycles with MOSI high to init SPI mode
+	// Note: According to the spec, this should be accompanied by a high/low
+	// transition on CS. I've found this isn't required, and I'm omiting it
+	// because there aren't enough pins on the SOT8 package for CS.
 	uint8_t sd_spi_init[10];
 	for (int i = 0; i < 10; i++) {
 		sd_spi_init[i] = 0xFF;
 	}
+	spi_write_sequence(channel, sd_spi_init, 10);
 
-	spi_write_sequence(sd_spi_init, 10);
-	// uint8_t CMD0[] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
-	uint8_t CMD0[6];
-	get_cmd(CMD0, 0, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A);
-	spi_write_sequence(CMD0, 6);
-	spi_read_sequence(0, 1);
+	// CMD0 -> CMD8 -> CMD58 (optional) -> repeat ACMD41 until idle bit cleared
+	uint8_t R1_resp;
+	send_sd_cmd(
+	  0, (const uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A, &R1_resp, 1);
+	if (R1_resp != 0x01)
+		return false;
 
-	// 0x48000001AA0F
-	uint8_t CMD8[6];
-	get_cmd(CMD8, 8, (uint8_t[]){ 0x00, 0x00, 0x01, 0xAA }, 0x0F);
-	spi_write_sequence(CMD8, 6);
 	uint8_t CMD8_resp[5];
-	spi_read_sequence(CMD8_resp, 5);
+	send_sd_cmd(8, (uint8_t[]){ 0x00, 0x00, 0x01, 0xAA }, 0x0F, CMD8_resp, 5);
 
-	// 0x7A0000000075
-	// uint8_t CMD58[] = { 0x7A, 0x00, 0x00, 0x00, 0x00, 0x75 };
-	uint8_t CMD58[6];
-	get_cmd(CMD58, 58, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x75);
-	spi_write_sequence(CMD58, 6);
 	uint8_t CMD58_resp[5];
-	spi_read_sequence(CMD58_resp, 5);
+	send_sd_cmd(58, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x75, CMD58_resp, 5);
 
-	uint8_t CMD55[6];
-	uint8_t ACMD41[6];
-	get_cmd(CMD55, 55, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x00);
-	get_cmd(ACMD41, 41, (uint8_t[]){ 0x40, 0x00, 0x00, 0x00 }, 0x00);
 	uint8_t attempts = 0;
-	uint8_t resp[1] = { 0x01 };
-	while ((*resp) != 0x00 && attempts < 50) {
-		spi_write_sequence(CMD55, 6);
-		spi_read_sequence(0, 1);
-		spi_write_sequence(ACMD41, 6);
-		spi_read_sequence(resp, 1);
-		delay(5);
+	while (R1_resp != 0x00 && attempts < 50) {
+		send_sd_cmd(55, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x00, 0, 1);
+		send_sd_cmd(
+		  41, (uint8_t[]){ 0x40, 0x00, 0x00, 0x00 }, 0x00, &R1_resp, 1);
 	}
+	if (R1_resp != 0x00)
+		return false;
 
-	// uint8_t CMD1[] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0x95 };
-	// // get_cmd(CMD1, 1, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x95);
-	// uint8_t resp[1] = { 0x01 };
-	// uint8_t attempts = 0;
-	// while ((*resp) == 0x01 && attempts < 15) {
-	// 	spi_write_sequence(CMD1, 6);
-	// 	spi_read_sequence(resp, 1);
-	// 	attempts++;
-	// 	delay(500);
-	// }
-	// spi_write_sequence(CMD1, 6);
-	// spi_read_sequence(0, 1);
-	// delay(1);
+	return true;
 }
 
 void sd_read(uint32_t len) {}
