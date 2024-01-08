@@ -18,6 +18,13 @@
 #include "stm32g031xx.h"
 #include <stdbool.h>
 
+typedef struct sd_read_data_packet
+{
+	uint8_t data_token[1];
+	uint8_t data_block[512];
+	uint8_t crc[2];
+} sd_read_data_packet;
+
 bool init_sd(SPI_TypeDef *chan);
 
-void sd_read(uint32_t len);
+void sd_read_block(uint32_t loc, sd_read_data_packet *packet);

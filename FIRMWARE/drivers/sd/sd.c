@@ -20,6 +20,7 @@
 #include "drivers/spi/spi.h"
 #include "sd.h"
 #include "stm32g031xx.h"
+#include "util.h"
 
 static volatile SPI_TypeDef *channel;
 
@@ -59,8 +60,9 @@ void send_sd_cmd(const uint8_t cmd_num,
 	while (i < resp_length) {
 		uint8_t read;
 		spi_read_sequence(channel, &read, 1);
-		if (read != 0xFF)
+		if (read != 0xFF) {
 			start_cond = true;
+		}
 		if (start_cond) {
 			if (resp_buff != 0)
 				resp_buff[i] = read;
@@ -71,6 +73,39 @@ void send_sd_cmd(const uint8_t cmd_num,
 	// The card might need some cycles after the response to clean up. Keep the
 	// clock going for eight cycles.
 	spi_write_sequence(channel, (uint8_t[]){ 0xFF }, 1);
+}
+
+void send_read_sd_cmd(const uint8_t cmd_num,
+					  const uint8_t *args,
+					  const uint8_t crc,
+					  uint8_t *resp_buff,
+					  uint16_t resp_length)
+{
+	uint8_t R1_resp;
+	send_sd_cmd(cmd_num, args, crc, &R1_resp, 1);
+
+	uint16_t i = 0;
+	bool start_cond = false;
+	if (R1_resp == 0x00) {
+		while (i < resp_length) {
+			uint8_t read;
+			spi_read_sequence(channel, &read, 1);
+			if (read != 0xFF) {
+				start_cond = true;
+			}
+			if (start_cond) {
+				if (resp_buff != 0)
+					resp_buff[i] = read;
+				i++;
+			}
+		}
+	}
+}
+
+void sd_read_block(uint32_t loc, sd_read_data_packet *packet)
+{
+	uint8_t *loc_arr = (uint8_t *)&loc;
+	send_read_sd_cmd(17, loc_arr, 0x00, (uint8_t *)&packet, (uint16_t)512);
 }
 
 /*
@@ -121,6 +156,7 @@ bool init_sd(SPI_TypeDef *chan)
 	chan->CR1 |= SPI_CR1_SPE_Msk;
 
 	channel = chan;
+	delay(300);
 
 	gpio_write(PIN('B', 7), 1);
 
@@ -153,10 +189,20 @@ bool init_sd(SPI_TypeDef *chan)
 		send_sd_cmd(
 		  41, (uint8_t[]){ 0x40, 0x00, 0x00, 0x00 }, 0x00, &R1_resp, 1);
 	}
+
+	// Set block size to 512
+	send_sd_cmd(16, (uint8_t[]){ 0x00, 0x00, 0x02, 0x00 }, 0x00, &R1_resp, 1);
+
 	if (R1_resp != 0x00)
 		return false;
+	// Card successfully initialized
+
+	// Increase clock speed
+	while (!(channel->SR & SPI_SR_TXE_Msk) || channel->SR & SPI_SR_BSY_Msk) {
+	};
+	chan->CR1 &= ~(SPI_CR1_BR_Msk);
+	// Limit speed for debugging on 24 MHz logic analyzer
+	chan->CR1 |= 0b011 << SPI_CR1_BR_Pos;
 
 	return true;
 }
-
-void sd_read(uint32_t len) {}
