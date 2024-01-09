@@ -2,61 +2,62 @@
 <html>
 
 <head>
-    <title>Tiny POV</title>
-    <script type="module" src="index.js"></script>
-    <link rel="stylesheet" href="index.css">
-    <script src="d3.v7.min.js"></script>
+	<title>Tiny POV</title>
+	<script type="module" src="index.js"></script>
+	<link rel="stylesheet" href="index.css">
+	<script src="d3.v7.min.js"></script>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 
 <body>
-    <div id="left_panel">
-        <div id="menu">
-            <h1>Tiny POV</h1>
-            <p>
-                Welcome to Tiny POV! I'm glad you're here.
-            </p>
-            <p>
-                To begin, please upload the image you wish to view on your display.
-            </p>
-            <img id="snapshot" src="">
-            <label for="file_upload" id="file_upload_button">
-                <p>Choose Image</p>
-            </label>
-            <input id="file_upload" type="file" accept="image/jpeg, image/png, image/jpg">
-            <div id="post_upload">
-                <p>
-                    Great choice! Heres a preview of the image as it will appear on Tiny POV. <br>
-                    When you're ready, click download to generate a file for the SD card.
-                </p>
+	<div id="left_panel">
+		<div id="menu">
+			<h1>Tiny POV</h1>
+			<p>
+				Welcome to Tiny POV! I'm glad you're here.
+			</p>
+			<p>
+				To begin, please upload the image you wish to view on your display.
+			</p>
+			<img id="snapshot" src="">
+			<label for="file_upload" id="file_upload_button">
+				<p>Choose Image</p>
+			</label>
+			<input id="file_upload" type="file" accept="image/jpeg, image/png, image/jpg">
+			<div id="post_upload">
+				<p>
+					Great choice! Heres a preview of the image as it will appear on Tiny POV. <br>
+					When you're ready, click download to generate a file for the SD card.
+				</p>
 
-                <button id="download">Download</button>
-            </div>
-            <div id="post_download">
-                <p>
-                    Now you're ready to load your image onto TinyPOV.
-                </p>
-                <ul>
-                    <li>Insert the SD card</li>
-                    <li>Delete the existing .pov file</li>
-                    <li>Place the new .pov file onto the SD card</li>
-                </ul>
-                <p>
-                    And you're done!
-                </p>
-            </div>
-        </div>
-        <div id="questions">
-            <p>
-                Have any questions? Please <a href="https://github.com/usedhondacivic/tiny-pov">let me know.</a><br>
-                Want to see more projects? <a href="https://www.michael-crum.com">Checkout my website</a>
-            </p>
-        </div>
-    </div>
-    <div id="right_panel">
-        <svg id="preview_svg"></svg>
-    </div>
+				<button id="download">Download</button>
+			</div>
+			<div id="post_download">
+				<p>
+					Now you're ready to load your image onto TinyPOV.
+				</p>
+				<ul>
+					<li>Insert the SD card</li>
+					<li>Delete the existing .pov file</li>
+					<li>Place the new .pov file onto the SD card</li>
+				</ul>
+				<p>
+					And you're done!
+				</p>
+			</div>
+		</div>
+		<div id="questions">
+			<p>
+				Have any questions? Please <a href="https://github.com/usedhondacivic/tiny-pov/issues">let me
+					know.</a><br>
+				Want to see more projects? <a href="https://www.michael-crum.com">Checkout my website</a>
+			</p>
+		</div>
+	</div>
+	<div id="right_panel">
+		<svg id="preview_svg"></svg>
+	</div>
 </body>
 
 </html>
