@@ -29,7 +29,16 @@ enum
 	GPIO_MODE_ANALOG
 };
 
+enum
+{
+	GPIO_NO_PULL,
+	GPIO_PULL_UP,
+	GPIO_PULL_DOWN
+};
+
 void gpio_set_mode(uint16_t pin, uint8_t mode);
+
+void gpio_set_PUPDR(uint16_t pin, uint8_t mode);
 
 void gpio_set_af(uint16_t pin, uint8_t af_num);
 

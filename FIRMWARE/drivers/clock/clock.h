@@ -20,3 +20,5 @@
 void init_clock();
 
 extern volatile uint32_t s_ticks;
+
+void delay(unsigned ms);

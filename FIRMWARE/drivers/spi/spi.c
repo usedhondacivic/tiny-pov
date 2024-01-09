@@ -27,7 +27,7 @@ void spi_read_sequence(volatile SPI_TypeDef *channel,
 		while (!(channel->SR & SPI_SR_RXNE_Msk) ||
 			   channel->SR & SPI_SR_BSY_Msk) {
 		};
-		uint8_t read;
+		uint8_t read = 0xFF;
 		while (channel->SR & SPI_SR_RXNE_Msk) {
 			read = *(((volatile uint8_t *)&(channel->DR)));
 		};

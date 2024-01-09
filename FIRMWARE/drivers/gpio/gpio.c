@@ -24,6 +24,15 @@ void gpio_set_mode(uint16_t pin, uint8_t mode)
 	gpio->MODER |= (mode & 3U) << (n * 2);	 // Set new mode
 }
 
+void gpio_set_PUPDR(uint16_t pin, uint8_t mode)
+{
+	GPIO_TypeDef *gpio = GPIO(PINBANK(pin)); // GPIO bank
+	int n = PINNO(pin);						 // Pin number
+	RCC->IOPENR |= BIT(PINBANK(pin));		 // Enable GPIO clock
+	gpio->PUPDR &= ~(3U << (n * 2));		 // Clear existing setting
+	gpio->PUPDR |= (mode & 3U) << (n * 2);	 // Set new mode
+}
+
 void gpio_set_af(uint16_t pin, uint8_t af_num)
 {
 	GPIO_TypeDef *gpio = GPIO(PINBANK(pin)); // GPIO bank

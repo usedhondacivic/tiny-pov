@@ -16,17 +16,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "drivers/clock/clock.h"
 #include "drivers/gpio/gpio.h"
 #include "drivers/spi/spi.h"
 #include "sd.h"
 #include "stm32g031xx.h"
-#include "util.h"
 
 static volatile SPI_TypeDef *channel;
 
 uint8_t get_cmd_byte(uint8_t num)
 {
-	return (0b01 << 6) | (num & 0b00111111);
+	return (uint8_t)((0b01 << 6) | (num & 0b00111111));
 }
 
 void get_cmd(uint8_t *buff,

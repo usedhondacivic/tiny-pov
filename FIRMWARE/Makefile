@@ -9,7 +9,6 @@ SOURCES += $(wildcard drivers/**/*.c)
 SOURCES += cmsis_m0/Source/Templates/gcc/startup_stm32g031xx.s # ST startup file. Compiler-dependent!
 
 HEADERS = $(wildcard drivers/**/*.h)
-HEADERS += util.h
 
 ifeq ($(OS),Windows_NT)
   RM = cmd /C del /Q /F

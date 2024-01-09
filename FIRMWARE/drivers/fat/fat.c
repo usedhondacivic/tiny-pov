@@ -22,4 +22,4 @@ void init_fat()
 	sd_read_block(0x00000000, &BPB);
 }
 
-void read_block() {}
+void read_file(char *file_name, char *file_ext) {}

@@ -82,3 +82,10 @@ void SysTick_Handler(void)
 {
 	s_ticks++;
 }
+
+void delay(unsigned ms)
+{
+	uint32_t until = s_ticks + ms;
+	while (s_ticks < until)
+		(void)0;
+}
