@@ -13,6 +13,7 @@
 
 #include "drivers/apa102/apa102.h"
 #include "drivers/clock/clock.h"
+#include "drivers/fat/fat.h"
 #include "drivers/gpio/gpio.h"
 #include "drivers/sd/sd.h"
 #include "stm32g031xx.h"
@@ -70,18 +71,20 @@ int main(void)
 
 	/* Init peripherals */
 
-	init_apa102(SPI1);
-	init_sd(SPI2);
-
-	uint8_t all_red[64 * 3];
-
-	for (int i = 0; i < 64; i++) {
-		all_red[i * 3] = 0x00;
-		all_red[i * 3 + 1] = 0x00;
-		all_red[i * 3 + 2] = 0xFF;
+	// init_apa102(SPI1);
+	if (init_sd(SPI2)) {
+		init_fat();
 	}
 
-	apa102_write_strip(all_red);
+	// uint8_t all_red[64 * 3];
+	//
+	// for (int i = 0; i < 64; i++) {
+	// 	all_red[i * 3] = 0x00;
+	// 	all_red[i * 3 + 1] = 0x00;
+	// 	all_red[i * 3 + 2] = 0xFF;
+	// }
+	//
+	// apa102_write_strip(all_red);
 
 	while (1) {
 	}

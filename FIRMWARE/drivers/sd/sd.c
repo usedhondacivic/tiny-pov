@@ -90,8 +90,9 @@ void send_read_sd_cmd(const uint8_t cmd_num,
 		while (i < resp_length) {
 			uint8_t read;
 			spi_read_sequence(channel, &read, 1);
-			if (read != 0xFF) {
+			if (read != 0xFF && !start_cond) {
 				start_cond = true;
+				continue;
 			}
 			if (start_cond) {
 				if (resp_buff != 0)
@@ -100,12 +101,14 @@ void send_read_sd_cmd(const uint8_t cmd_num,
 			}
 		}
 	}
+	// Read out CRC and an extra byte to keep the clock running
+	spi_write_sequence(channel, (uint8_t[]){ 0xFF, 0xFF, 0xFF }, 3);
 }
 
-void sd_read_block(uint32_t loc, sd_read_data_packet *packet)
+void sd_read_block(uint32_t loc, uint8_t *block_buff)
 {
 	uint8_t *loc_arr = (uint8_t *)&loc;
-	send_read_sd_cmd(17, loc_arr, 0x00, (uint8_t *)&packet, (uint16_t)512);
+	send_read_sd_cmd(17, loc_arr, 0x00, block_buff, (uint16_t)512);
 }
 
 /*
@@ -157,8 +160,9 @@ bool init_sd(SPI_TypeDef *chan)
 
 	channel = chan;
 	delay(300);
+	uint8_t attempts = 0;
 
-	gpio_write(PIN('B', 7), 1);
+	// gpio_write(PIN('B', 7), 1);
 
 	// Min 74 cycles with MOSI high to init SPI mode
 	// Note: According to the spec, this should be accompanied by a high/low
@@ -172,10 +176,11 @@ bool init_sd(SPI_TypeDef *chan)
 
 	// CMD0 -> CMD8 -> CMD58 (optional) -> repeat ACMD41 until idle bit cleared
 	uint8_t R1_resp;
-	send_sd_cmd(
-	  0, (const uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A, &R1_resp, 1);
-	if (R1_resp != 0x01)
-		return false;
+	do {
+		send_sd_cmd(
+		  0, (const uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A, &R1_resp, 1);
+		attempts++;
+	} while (R1_resp != 0x01 && attempts < 50);
 
 	uint8_t CMD8_resp[5];
 	send_sd_cmd(8, (uint8_t[]){ 0x00, 0x00, 0x01, 0xAA }, 0x0F, CMD8_resp, 5);
@@ -183,12 +188,13 @@ bool init_sd(SPI_TypeDef *chan)
 	uint8_t CMD58_resp[5];
 	send_sd_cmd(58, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x75, CMD58_resp, 5);
 
-	uint8_t attempts = 0;
-	while (R1_resp != 0x00 && attempts < 50) {
+	attempts = 0;
+	do {
 		send_sd_cmd(55, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x00, 0, 1);
 		send_sd_cmd(
 		  41, (uint8_t[]){ 0x40, 0x00, 0x00, 0x00 }, 0x00, &R1_resp, 1);
-	}
+		attempts++;
+	} while (R1_resp != 0x00 && attempts < 50);
 
 	// Set block size to 512
 	send_sd_cmd(16, (uint8_t[]){ 0x00, 0x00, 0x02, 0x00 }, 0x00, &R1_resp, 1);

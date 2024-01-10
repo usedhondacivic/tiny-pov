@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include "drivers/sd/sd.h"
+
 /*
  * REFERENCE:
  * Section 3: Boot Sector and BPB
@@ -53,7 +55,29 @@ typedef struct BS
 	uint8_t BS_FilSysType[8];
 	uint8_t blank[420];
 	uint8_t Signature_word[2];
-} BS;
+} __attribute__((packed)) BS;
+
+typedef struct DIR_entry
+{
+	uint8_t DIR_Name[11];
+	uint8_t DIR_Attr[1];
+	uint8_t DIR_NTRes[1];
+	uint8_t DIR_CrtTime[2];
+	uint8_t DIR_CrtDate[2];
+	uint8_t DIR_LstAccDate[2];
+	uint8_t DIR_FstClusHI[2];
+	uint8_t DIR_WrtTime[2];
+	uint8_t DIR_WrtDate[2];
+	uint8_t DIR_FstClusLO[2];
+	uint8_t DIR_FileSize[2];
+} __attribute__((packed)) DIR_entry;
+
+union FAT_block
+{
+	BS bs;
+	DIR_entry dir_entries[16];
+	uint8_t raw_bytes[512];
+};
 
 void init_fat();
 
