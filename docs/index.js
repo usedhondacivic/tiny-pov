@@ -174,6 +174,7 @@ input.addEventListener("change", function () {
 const download = document.getElementById("download");
 download.addEventListener("click", function () {
     let flat_image = graph.pixel_data.flatMap(d => [].slice.call(d.color)); // [].slice.call -> convert uint8 array to normal js array
+    let file_contents = "";
     for(var i = 0; i < flat_image.length; i++){
         file_contents += String.fromCharCode(flat_image[i]);
     }
