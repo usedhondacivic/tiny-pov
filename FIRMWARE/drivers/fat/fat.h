@@ -103,6 +103,7 @@ union FAT_block
 	MBR mbr;
 	DIR_entry dir_entries[16];
 	uint8_t raw_bytes[512];
+	uint32_t FAT[16];
 };
 
 void init_fat();

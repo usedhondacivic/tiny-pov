@@ -22,6 +22,10 @@
 #include "sd.h"
 #include "stm32g031xx.h"
 
+#define reverse_bytes_32(num)                                                  \
+	(((num & 0xFF000000) >> 24) | ((num & 0x00FF0000) >> 8) |                  \
+	 ((num & 0x0000FF00) << 8) | ((num & 0x000000FF) << 24))
+
 static volatile SPI_TypeDef *channel;
 
 uint8_t get_cmd_byte(uint8_t num)
@@ -107,7 +111,8 @@ void send_read_sd_cmd(const uint8_t cmd_num,
 
 void sd_read_block(uint32_t loc, uint8_t *block_buff)
 {
-	uint8_t *loc_arr = (uint8_t *)&loc;
+	uint32_t loc_flipped = reverse_bytes_32(loc);
+	uint8_t *loc_arr = (uint8_t *)&loc_flipped;
 	send_read_sd_cmd(17, loc_arr, 0x00, block_buff, (uint16_t)512);
 }
 
