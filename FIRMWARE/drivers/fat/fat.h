@@ -5,19 +5,44 @@
  * FAT file system driver for the STM32g031.
  * Only supports read operations.
  * Only supports cards with 512 bytes per sector.
+ * Assumes card formatted as FAT32 with one partion and using Master Boot
+ * Register partitioning. (This is the default on Ubuntu 22.04.3)
  *
  * MCU reference manual:
  * https://www.st.com/resource/en/reference_manual/rm0444-stm32g0x1-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
  *
  * FAT Spec:
  * https://academy.cba.mit.edu/classes/networking_communications/SD/FAT.pdf
+ *
+ * Master Boot Record reference:
+ * https://en.wikipedia.org/wiki/Master_boot_record
  */
 
 #pragma once
 
 #include <stdint.h>
 
-#include "drivers/sd/sd.h"
+/*
+ * REFERENCE:
+ * Sector Layout
+ * Partion table entries
+ */
+typedef struct PartitionEntry
+{
+	uint8_t PE_status[1];
+	uint8_t PE_CHS_start_addr[3];
+	uint8_t PE_type[1];
+	uint8_t PE_CHS_end_addr[3];
+	uint8_t PE_LBA_addr[4];
+	uint8_t PE_num_bytes[4];
+} __attribute__((packed)) PartitionEntry;
+
+typedef struct MBR
+{
+	uint8_t MBR_BootStrap[446];
+	PartitionEntry MBR_PartitionEntries[4];
+	uint8_t MBR_BootSig[2];
+} __attribute__((packed)) MBR;
 
 /*
  * REFERENCE:
@@ -75,6 +100,7 @@ typedef struct DIR_entry
 union FAT_block
 {
 	BS bs;
+	MBR mbr;
 	DIR_entry dir_entries[16];
 	uint8_t raw_bytes[512];
 };
