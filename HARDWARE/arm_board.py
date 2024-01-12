@@ -117,7 +117,11 @@ stm32_interface = Interface(
 
 
 # SUBCIRCUITS
-
+@subcircuit
+def cap_combo(tag, val, num, a_net, b_net):
+    for i in range(num):
+        cap = C_0603(tag=f"{tag}-{i}", value=val)
+        a_net & cap & b_net
 
 # 3.3v converter: https://www.diodes.com/assets/Datasheets/AP63200-AP63201-AP63203-AP63205.pdf
 # Full bridge rectifier: https://www.diodes.com/assets/Datasheets/DBF310.pdf
@@ -137,15 +141,14 @@ def power_supply(interface):
         tag="rectifier",
     )
 
-    smoothing_cap = C_TH(tag="smoothing_cap", value="? uF")
 
     # Coil connection
     connector["1"] & interface.Vac_a & rectifier["Vac_a"]
     connector["2"] & interface.Vac_b & rectifier["Vac_b"]
 
     # Rectifier IC
-    rectifier["V+"] & smoothing_cap[1]
-    rectifier["V-"] & smoothing_cap[2] & interface.GND
+    rectifier["V-"] & interface.GND
+    cap_combo("rect_smooth", "22 uF", 5, rectifier["V+"], rectifier["V-"])
 
     converter_3_3 = Part(
         "tiny_pov_symbols",
@@ -167,11 +170,6 @@ def power_supply(interface):
     converter_3_3["FB"] & output_ind[2]
     interface.Vdd & output_cap & interface.GND
 
-    # v_dd_test = test_point(tag="v_dd_test")
-    # v_gnd_test = test_point(tag="v_gnd_test")
-    # interface.Vdd += v_dd_test
-    # interface.GND += v_gnd_test
-
 
 # APA102-2020: https://www.mouser.com/datasheet/2/737/APA102_2020_SMD_LED-2487271.pdf
 @subcircuit
@@ -184,17 +182,14 @@ def apa102_led_strip(num_leds, interface):
     )
     # First LED connects to the STM32
     led = apa102_led(tag="apa_led_0")
-    led_clk_test = test_point(tag="led_clk_test")
-    led_data_test = test_point(tag="led_data_test")
-    led["CKI"] & led_clk_test & interface.CLK
-    led["SDI"] & led_data_test & interface.DATA
+    led["CKI"] & interface.CLK
+    led["SDI"] & interface.DATA
 
     led["VDD"] += interface.Vdd
     led["GND"] += interface.GND
 
     # 100 uF cap to prevent brownouts
-    surge_cap = C_TH(value="100 uF", tag="surge_cap")
-    led["VDD"] & surge_cap & led["GND"]
+    cap_combo("surge_cap", "22 uF", 5, led["VDD"], led["GND"])
 
     # All other LEDs connect to the previous LED
     for i in range(num_leds - 1):
@@ -227,26 +222,19 @@ def sd_card(interface):
         & sd_holder["CS"]
     )
 
-    sd_sck_test = test_point(tag="sd_sck_test_point")
-    sd_mosi_test = test_point(tag="sd_mositest_point")
-    sd_miso_test = test_point(tag="sd_miso_test_point")
-
     # Each data line with a pull up resistor
     (
         sd_holder["SCK"]
-        & sd_sck_test
         & tee(R_0603(value="47k", tag="SD_SCK_PULLUP") & interface.Vdd)
         & interface.SCK
     )
     (
         sd_holder["MOSI"]
-        & sd_mosi_test
         & tee(R_0603(value="47k", tag="SD_MOSI_PULLUP") & interface.Vdd)
         & interface.MOSI
     )
     (
         sd_holder["MISO"]
-        & sd_miso_test
         & tee(R_0603(value="47k", tag="SD_MISO_PULLUP") & interface.Vdd)
         & interface.MISO
     )
@@ -273,46 +261,28 @@ def hall_effect(interface):
 # STM32G0 (SO8N package): https://www.st.com/resource/en/datasheet/stm32g030c6.pdf
 @subcircuit
 def stm32(interface):
-    # Power
     stm = Part(
         "tiny_pov_symbols",
         "STM32G030J6Mx",
         footprint="tiny_pov_footprints:STM32_SO_8N",
         tag="stm",
     )
+
+    # Power
     stm["VDD"] += interface.Vdd
     stm["VSS"] += interface.GND
 
-    stm["p4"].aliases += "NRST"
-
-    # Reset will be used as GPIO
-    # Upon power cycle, reset gets mapped back to NRST.
-    # When jumper is bridged it will remain in that state and allow for programming.
-    # Active low, placed in parallel with a 100nF cap as mentioned on page 66 of the data sheet
-    reset_jumper = jumper(tag="reset_jumper")
-    stm["NRST"] & reset_jumper & interface.GND
-    
-    # Because NRST will be remapped, no need for the smoothing cap
-    # reset_cap = C_0402(
-    #     value="100 nF",
-    #     tag="reset_cap",
-    # )
-    # stm["NRST"] & reset_cap & interface.GND # place close to chip
-
     # APA102s
     interface.led_clk += stm["p4"] 
-    interface.led_data += stm["p6"] 
+    interface.led_data += stm["p8"] 
 
     # SD card
     interface.sd_sck += stm["p1"]
-    interface.sd_miso += stm["p8"]
-    interface.sd_mosi += stm["p5"]
+    interface.sd_miso += stm["p5"]
+    interface.sd_mosi += stm["p6"]
 
     # Hall Effect
-    stm["p7"] += interface.hall_data  # :|
-
-
-# EXPORTING
+    stm["p7"] += interface.hall_data
 
 power_supply(power_supply_interface)
 apa102_led_strip(64, apa102_interface)
@@ -320,5 +290,6 @@ sd_card(sd_card_interface)
 hall_effect(hall_effect_interface)
 stm32(stm32_interface)
 
+# EXPORTING
 ERC()
 generate_netlist()
