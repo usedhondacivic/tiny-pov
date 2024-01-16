@@ -87,6 +87,7 @@ typedef struct DIR_entry
 	uint8_t DIR_Name[11];
 	uint8_t DIR_Attr[1];
 	uint8_t DIR_NTRes[1];
+	uint8_t DIR_CrtTimeTenth[1];
 	uint8_t DIR_CrtTime[2];
 	uint8_t DIR_CrtDate[2];
 	uint8_t DIR_LstAccDate[2];
@@ -94,7 +95,7 @@ typedef struct DIR_entry
 	uint8_t DIR_WrtTime[2];
 	uint8_t DIR_WrtDate[2];
 	uint8_t DIR_FstClusLO[2];
-	uint8_t DIR_FileSize[2];
+	uint8_t DIR_FileSize[4];
 } __attribute__((packed)) DIR_entry;
 
 union FAT_block
@@ -108,4 +109,4 @@ union FAT_block
 
 void init_fat();
 
-void read_block();
+void fat_read_file(char *file_name);

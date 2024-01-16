@@ -12,7 +12,6 @@
  * Only supports SDHC/SDXC cards with 512 bytes per sector.
  * Assumes card formatted as FAT32 with one partion and using Master Boot
  * Register partitioning. (This is the default on Ubuntu 22.04.3)
- * Only supports up to 8 FAT clusters and 8 Root Directory clusters
  *
  * MCU reference manual:
  * https://www.st.com/resource/en/reference_manual/rm0444-stm32g0x1-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
@@ -33,16 +32,13 @@
 union FAT_block mbr;
 // Bios Parameter Block
 union FAT_block bs;
-union FAT_block root_dir;
-union FAT_block fat_alloc[8];
 
-uint32_t first_data_sector;
+uint32_t first_data_block;
 uint32_t BS_addr;
-uint32_t root_dir_sector;
 
-uint32_t sector_from_cluster(uint32_t clus_num)
+uint32_t block_num_from_cluster(uint32_t clus_num)
 {
-	return ((clus_num - 2) * bs.bs.BPB_SecPerClus[0]) + first_data_sector;
+	return ((clus_num - 2) * bs.bs.BPB_SecPerClus[0]) + first_data_block;
 }
 
 uint32_t fat_entry_for_cluster(uint32_t clus_num)
@@ -50,7 +46,10 @@ uint32_t fat_entry_for_cluster(uint32_t clus_num)
 	uint32_t FATOffset = clus_num * 4;
 	uint32_t FATSecNum = (FATOffset / *(uint16_t *)bs.bs.BPB_BytsPerSec);
 	uint32_t FATEntOffset = FATOffset % *(uint16_t *)bs.bs.BPB_BytsPerSec;
-	return fat_alloc[FATSecNum].FAT[FATEntOffset];
+	union FAT_block fat_sec;
+	sd_read_block(BS_addr + *(uint16_t *)bs.bs.BPB_RsvdSecCnt + FATSecNum,
+				  fat_sec.raw_bytes);
+	return fat_sec.FAT[FATEntOffset];
 }
 
 void init_fat()
@@ -64,21 +63,9 @@ void init_fat()
 	// Read BS for FAT partition
 	sd_read_block(BS_addr, bs.raw_bytes);
 
-	// Calculate the start address of the first partition
-	uint32_t fat_alloc_addr = *(uint16_t *)bs.bs.BPB_RsvdSecCnt;
-
-	// Read FAT Alloc table
-	for (uint8_t i = 1; i < *(bs.bs.BPB_NumFATs); i++) {
-		sd_read_block(fat_alloc_addr, fat_alloc[i].raw_bytes);
-	}
-
 	// Calculate the the first sector of the data region
-	first_data_sector = *(uint16_t *)bs.bs.BPB_RsvdSecCnt +
-						bs.bs.BPB_NumFATs[0] * (*(uint32_t *)bs.bs.BPB_FATSz32);
-
-	root_dir_sector = sector_from_cluster(*(uint32_t *)bs.bs.BPB_RootClus);
-
-	sd_read_block(BS_addr + root_dir_sector, root_dir.raw_bytes);
+	first_data_block = BS_addr + *(uint16_t *)bs.bs.BPB_RsvdSecCnt +
+					   bs.bs.BPB_NumFATs[0] * (*(uint32_t *)bs.bs.BPB_FATSz32);
 }
 
 bool file_name_comp(char *a, char *b)
@@ -90,18 +77,39 @@ bool file_name_comp(char *a, char *b)
 	return true;
 }
 
-uint32_t find_file_start_sector(char *file_name)
+uint32_t find_file_start_cluster(char *file_name)
 {
-	while (1) {
+	uint32_t curr_root_dir_cluster = *(uint32_t *)bs.bs.BPB_RootClus;
+	do {
+		union FAT_block root_dir;
+		sd_read_block(block_num_from_cluster(curr_root_dir_cluster),
+					  root_dir.raw_bytes);
+		curr_root_dir_cluster = fat_entry_for_cluster(curr_root_dir_cluster);
 		for (int i = 0; i < 512 / 32; i++) {
 			DIR_entry file = root_dir.dir_entries[i];
 			if (file_name_comp(file_name, (char *)&(file.DIR_Name))) {
-				return (*(uint32_t *)file.DIR_FstClusHI) << 16 |
-					   (*(uint32_t *)file.DIR_FstClusLO);
+				// ew
+				return *(uint32_t *)((uint8_t[]){ file.DIR_FstClusLO[0],
+												  file.DIR_FstClusLO[1],
+												  file.DIR_FstClusHI[0],
+												  file.DIR_FstClusHI[1] });
 			}
 		}
-		fat_entry_for_cluster(root_dir_sector);
-	}
+	} while (curr_root_dir_cluster < 0xFFFFFF6);
+	return 0;
 }
 
-void read_file(char *file_name) {}
+/*
+ * file_name must be an 11 character string following the FAT spec's "short"
+ * file name format (6.1).
+ */
+
+void fat_read_file(char *file_name)
+{
+	uint32_t start_cluster = find_file_start_cluster(file_name);
+
+	volatile union FAT_block root_dir;
+	sd_read_block(block_num_from_cluster(start_cluster), root_dir.raw_bytes);
+	while (1)
+		;
+}

@@ -75,6 +75,7 @@ int main(void)
 	if (init_sd(SPI2)) {
 		init_fat();
 	}
+	fat_read_file("README  TXT");
 
 	// uint8_t all_red[64 * 3];
 	//
