@@ -5,7 +5,7 @@
 #include "stm32g031xx.h"
 
 void spi_write_sequence(volatile SPI_TypeDef *channel,
-						const uint8_t *data,
+						uint8_t *const data,
 						uint16_t len)
 {
 	for (int i = 0; i < len; i++) {
@@ -13,10 +13,12 @@ void spi_write_sequence(volatile SPI_TypeDef *channel,
 		};
 		*((volatile uint8_t *)&(channel->DR)) = data[i];
 	}
+	while (channel->SR & SPI_SR_BSY_Msk) {
+	};
 }
 
 void spi_read_sequence(volatile SPI_TypeDef *channel,
-					   uint8_t *buff,
+					   uint8_t *const buff,
 					   uint16_t len)
 {
 	uint8_t i = 0;
@@ -35,4 +37,6 @@ void spi_read_sequence(volatile SPI_TypeDef *channel,
 			buff[i] = read;
 		i++;
 	}
+	while (channel->SR & SPI_SR_BSY_Msk) {
+	};
 }

@@ -109,4 +109,6 @@ union FAT_block
 
 void init_fat();
 
-void fat_read_file(char *file_name);
+void fat_open_file(char *file_name);
+
+uint32_t fat_read_file_block(uint8_t *const data);

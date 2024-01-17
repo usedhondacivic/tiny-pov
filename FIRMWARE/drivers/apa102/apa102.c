@@ -86,8 +86,8 @@ void write_sequence(const uint8_t *data, uint16_t len)
 void write_led_frames(const uint8_t *data, uint16_t len)
 {
 	for (int i = 0; i < len; i++) {
-		write_sequence(&brightness_byte, 1);
-		write_sequence(data + i * 3, 3);
+		// write_sequence(&brightness_byte, 1);
+		write_sequence(data + i * 4, 4);
 	}
 }
 

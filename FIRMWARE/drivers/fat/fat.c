@@ -29,12 +29,12 @@
 #include "drivers/sd/sd.h"
 
 // Master Boot Record
-union FAT_block mbr;
+static union FAT_block mbr;
 // Bios Parameter Block
-union FAT_block bs;
+static union FAT_block bs;
 
-uint32_t first_data_block;
-uint32_t BS_addr;
+static uint32_t first_data_block;
+static uint32_t BS_addr;
 
 uint32_t block_num_from_cluster(uint32_t clus_num)
 {
@@ -46,7 +46,7 @@ uint32_t fat_entry_for_cluster(uint32_t clus_num)
 	uint32_t FATOffset = clus_num * 4;
 	uint32_t FATSecNum = (FATOffset / *(uint16_t *)bs.bs.BPB_BytsPerSec);
 	uint32_t FATEntOffset = FATOffset % *(uint16_t *)bs.bs.BPB_BytsPerSec;
-	union FAT_block fat_sec;
+	static union FAT_block fat_sec;
 	sd_read_block(BS_addr + *(uint16_t *)bs.bs.BPB_RsvdSecCnt + FATSecNum,
 				  fat_sec.raw_bytes);
 	return fat_sec.FAT[FATEntOffset];
@@ -68,16 +68,18 @@ void init_fat()
 					   bs.bs.BPB_NumFATs[0] * (*(uint32_t *)bs.bs.BPB_FATSz32);
 }
 
-bool file_name_comp(char *a, char *b)
+bool file_name_comp(char *const a, char *const b)
 {
-	for (int i = 0; i < 7; i++) {
-		if (a[i] != b[i])
+	for (int i = 0; i < 11; i++) {
+		if (a[i] != b[i] && i != 6 && i != 7)
 			return false;
 	}
 	return true;
 }
 
-uint32_t find_file_start_cluster(char *file_name)
+void find_file_start_info(char *const file_name,
+						  uint32_t *const cluster,
+						  uint32_t *const file_length)
 {
 	uint32_t curr_root_dir_cluster = *(uint32_t *)bs.bs.BPB_RootClus;
 	do {
@@ -89,14 +91,15 @@ uint32_t find_file_start_cluster(char *file_name)
 			DIR_entry file = root_dir.dir_entries[i];
 			if (file_name_comp(file_name, (char *)&(file.DIR_Name))) {
 				// ew
-				return *(uint32_t *)((uint8_t[]){ file.DIR_FstClusLO[0],
-												  file.DIR_FstClusLO[1],
-												  file.DIR_FstClusHI[0],
-												  file.DIR_FstClusHI[1] });
+				*cluster = *(uint32_t *)((uint8_t[]){ file.DIR_FstClusLO[0],
+													  file.DIR_FstClusLO[1],
+													  file.DIR_FstClusHI[0],
+													  file.DIR_FstClusHI[1] });
+				*file_length = *(uint32_t *)file.DIR_FileSize;
+				return;
 			}
 		}
 	} while (curr_root_dir_cluster < 0xFFFFFF6);
-	return 0;
 }
 
 /*
@@ -104,12 +107,21 @@ uint32_t find_file_start_cluster(char *file_name)
  * file name format (6.1).
  */
 
-void fat_read_file(char *file_name)
+static uint32_t current_cluster = 0;
+static uint32_t file_length_remaining = 0;
+void fat_open_file(char *file_name)
 {
-	uint32_t start_cluster = find_file_start_cluster(file_name);
+	find_file_start_info(file_name, &current_cluster, &file_length_remaining);
+}
 
-	volatile union FAT_block root_dir;
-	sd_read_block(block_num_from_cluster(start_cluster), root_dir.raw_bytes);
-	while (1)
-		;
+uint32_t fat_read_file_block(uint8_t *const data)
+{
+	sd_read_block(block_num_from_cluster(current_cluster), data);
+	current_cluster = fat_entry_for_cluster(current_cluster);
+	if (file_length_remaining > 512) {
+		file_length_remaining -= 512;
+		return file_length_remaining;
+	} else {
+		return 0;
+	}
 }

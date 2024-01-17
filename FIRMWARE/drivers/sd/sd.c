@@ -17,7 +17,6 @@
 #include <stdint.h>
 
 #include "drivers/clock/clock.h"
-#include "drivers/gpio/gpio.h"
 #include "drivers/spi/spi.h"
 #include "sd.h"
 #include "stm32g031xx.h"
@@ -33,9 +32,9 @@ uint8_t get_cmd_byte(uint8_t num)
 	return (uint8_t)((0b01 << 6) | (num & 0b00111111));
 }
 
-void get_cmd(uint8_t *buff,
+void get_cmd(uint8_t *const buff,
 			 const uint8_t cmd_num,
-			 const uint8_t *args,
+			 uint8_t *const args,
 			 const uint8_t crc)
 {
 	buff[0] = get_cmd_byte(cmd_num);
@@ -46,10 +45,10 @@ void get_cmd(uint8_t *buff,
 }
 
 void send_sd_cmd(const uint8_t cmd_num,
-				 const uint8_t *args,
+				 uint8_t *const args,
 				 const uint8_t crc,
-				 uint8_t *resp_buff,
-				 uint8_t resp_length)
+				 uint8_t *const resp_buff,
+				 const uint8_t resp_length)
 {
 	// Send command string
 	uint8_t cmd_buff[6];
@@ -80,7 +79,7 @@ void send_sd_cmd(const uint8_t cmd_num,
 }
 
 void send_read_sd_cmd(const uint8_t cmd_num,
-					  const uint8_t *args,
+					  uint8_t *const args,
 					  const uint8_t crc,
 					  uint8_t *resp_buff,
 					  uint16_t resp_length)
@@ -109,7 +108,7 @@ void send_read_sd_cmd(const uint8_t cmd_num,
 	spi_write_sequence(channel, (uint8_t[]){ 0xFF, 0xFF, 0xFF }, 3);
 }
 
-void sd_read_block(uint32_t loc, uint8_t *block_buff)
+void sd_read_block(uint32_t loc, uint8_t *const block_buff)
 {
 	uint32_t loc_flipped = reverse_bytes_32(loc);
 	uint8_t *loc_arr = (uint8_t *)&loc_flipped;
@@ -183,7 +182,7 @@ bool init_sd(SPI_TypeDef *chan)
 	uint8_t R1_resp;
 	do {
 		send_sd_cmd(
-		  0, (const uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A, &R1_resp, 1);
+		  0, (uint8_t[]){ 0x00, 0x00, 0x00, 0x00 }, 0x4A, &R1_resp, 1);
 		attempts++;
 	} while (R1_resp != 0x01 && attempts < 50);
 

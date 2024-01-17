@@ -20,4 +20,4 @@
 
 bool init_sd(SPI_TypeDef *chan);
 
-void sd_read_block(uint32_t loc, uint8_t *block_buff);
+void sd_read_block(uint32_t loc, uint8_t *const block_buff);
