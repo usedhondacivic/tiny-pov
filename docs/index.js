@@ -14,7 +14,7 @@ let image_height = null;
 function get_color_at_point(svg_point, bounding_box){
     let x = Math.floor(map(svg_point.x, bounding_box.x, bounding_box.x + bounding_box.width, 0, image_width - 1));
     let y = Math.floor(map(svg_point.y, bounding_box.y, bounding_box.y + bounding_box.height, 0, image_height - 1));
-    let color = image_data.slice((y * image_width + x) * 4, (y * image_width + x + 3) *4);
+    let color = image_data.slice((y * image_width + x) * 4, (y * image_width + x) *4 + 3);
     let a = image_data[(y * image_width + x + 3) * 4];
     for(var i=0; i<a.length; i++) {
         color[i] *= a / 255;
@@ -173,15 +173,14 @@ input.addEventListener("change", function () {
 
 const download = document.getElementById("download");
 download.addEventListener("click", function () {
-    let flat_image = graph.pixel_data.flatMap(d => [].slice.call(d.color)); // [].slice.call -> convert uint8 array to normal js array
-    let file_contents = "";
-    for(var i = 0; i < flat_image.length; i++){
-        file_contents += String.fromCharCode(flat_image[i]);
-    }
-    var url = "data:text/plain;charset=utf-8," + encodeURIComponent(file_contents);
+    let norm_image = graph.pixel_data.map(d => [].slice.call(d.color)); // [].slice.call -> convert uint8 array to normal js array
+	let flat_image = norm_image.flatMap(d => [225, ...d]);
+	let converted_arr = new Uint8Array(flat_image);
+	console.log(converted_arr);
+	var file = new File([converted_arr], {type: "application/octet-stream"});
     var element = document.createElement('a');
-    element.setAttribute("href", `${url}`);
-    element.setAttribute('download', `tiny_pov_${image_name}.pov`);
+    element.setAttribute("href", `${URL.createObjectURL(file)}`);
+    element.setAttribute('download', `tiny_pov_${image_name.replace(/[^a-zA-Z]/g, "").toUpperCase()}.pov`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
