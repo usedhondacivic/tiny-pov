@@ -173,7 +173,7 @@ input.addEventListener("change", function () {
 
 const download = document.getElementById("download");
 download.addEventListener("click", function () {
-    let norm_image = graph.pixel_data.map(d => [].slice.call(d.color)); // [].slice.call -> convert uint8 array to normal js array
+    let norm_image = graph.pixel_data.map(d => [].slice.call(d.color.reverse())); // [].slice.call -> convert uint8 array to normal js array
 	let flat_image = norm_image.flatMap(d => [225, ...d]);
 	let converted_arr = new Uint8Array(flat_image);
 	console.log(converted_arr);
